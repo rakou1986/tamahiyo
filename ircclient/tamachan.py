@@ -46,7 +46,6 @@ class Tamachan(object):
     except socket.error:
       self.continue_.clear()
 
-  # :rakou1986!~rakou1986@113x37x106x22.ap113.ftth.ucom.ne.jp PRIVMSG #rakou$NIt20 :naisenn?
   def _announce(self, sock_ipc):
     if conf.ANNOUNCE_INTERVAL < (time.time() - self.announce_timer):
       for channel in conf.CHANNELS:
