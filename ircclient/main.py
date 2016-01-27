@@ -20,7 +20,7 @@ bufsize = 32768
 irc_proxy_thread = ("127.0.0.1", 12010)
 service_thread = ("127.0.0.1", 12011)
 
-class Tamachan(object):
+class IRCClient(object):
   def __init__(self):
     self.continue_ = threading.Event()
     self.continue_.set() # is_set() == True
@@ -47,9 +47,9 @@ class Tamachan(object):
       self.continue_.clear()
 
   def irc_proxy_thread(self):
-    sock_inter_thread = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock_inter_thread.bind(irc_proxy_thread)
-    sock_inter_thread.setblocking(0)
+    sock_internal = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock_internal.bind(irc_proxy_thread)
+    sock_internal.setblocking(0)
     sock_irc_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
       sock_irc_client.connect(conf.IRCSERVER)
@@ -88,9 +88,9 @@ class Tamachan(object):
               self.continue_.clear()
               print "ping timeout"
               continue
-          self._send(sock_inter_thread, msg, service_thread)
-      if self._select(sock_inter_thread, conf.POLL_INTERVAL):
-        msg = sock_inter_thread.recv(bufsize)
+          self._send(sock_internal, msg, service_thread)
+      if self._select(sock_internal, conf.POLL_INTERVAL):
+        msg = sock_internal.recv(bufsize)
         self._send(sock_irc_client, msg)
         print [msg]
 
@@ -101,12 +101,12 @@ class Tamachan(object):
               conf.NICKNAME,
               conf.NICKNAME,
               channel.encode(conf.ENCODING))
-          self._send(sock_inter_thread, msg, service_thread)
+          self._send(sock_internal, msg, service_thread)
         self.announce_timer = time.time()
 
     self._send(sock_irc_client, "QUIT\r\n")
     sock_irc_client.close()
-    sock_inter_thread.close()
+    sock_internal.close()
     print "irc_proxy_thread end"
 
   def service_thread(self):
@@ -129,25 +129,25 @@ def join_threads():
     if t is not threading.currentThread():
       t.join()
 
-def exit_handler(tamachan, signum=None, frame=None):
-  tamachan.continue_.clear()
+def exit_handler(irc_client, signum=None, frame=None):
+  irc_client.continue_.clear()
   join_threads()
   sys.exit(0)
 
-def tamachan_life_cycle():
-  tamachan = Tamachan()
+def irc_client_life_cycle():
+  irc_client = IRCClient()
   for signal_ in [signal.SIGINT, signal.SIGTERM]:
-    signal.signal(signal_, lambda signum,frame: exit_handler(tamachan, signum, frame))
-  for thread in [threading.Thread(target=method) for method in [tamachan.service_thread, tamachan.irc_proxy_thread]]:
+    signal.signal(signal_, lambda signum,frame: exit_handler(irc_client, signum, frame))
+  for thread in [threading.Thread(target=method) for method in [irc_client.service_thread, irc_client.irc_proxy_thread]]:
     thread.start()
-  while tamachan.continue_.is_set():
+  while irc_client.continue_.is_set():
     # シグナルハンドリング用のループ
     time.sleep(1)
   join_threads()
 
 def main():
   while True:
-    tamachan_life_cycle()
+    irc_client_life_cycle()
     time.sleep(60) # 落ちたら1分後に再接続
 
 if __name__ == "__main__":
