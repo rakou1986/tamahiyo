@@ -14,7 +14,7 @@ import xmlrpclib
 
 day = 60 * 60 * 24
 
-class APIService(object):
+class XMLRPCInterface(object):
   def __init__(self):
     self.server = SimpleXMLRPCServer(conf.APISOCKNAME, requestHandler=SimpleXMLRPCRequestHandler, allow_none=True)
     self.server.register_instance(TamahiyoCoreAPI())
@@ -49,19 +49,19 @@ def join_threads():
     if t is not threading.currentThread():
       t.join()
 
-def exit_handler(api, signum=None, frame=None):
-  api.continue_.clear()
-  api.server.shutdown()
+def exit_handler(interface, signum=None, frame=None):
+  interface.continue_.clear()
+  interface.server.shutdown()
   join_threads()
   sys.exit(0)
 
 def main():
-  api = APIService()
+  interface = XMLRPCInterface()
   for signal_ in [signal.SIGINT, signal.SIGTERM]:
-    signal.signal(signal_, lambda signum,frame: exit_handler(api, signum, frame))
-  for thread in [threading.Thread(target=method) for method in [api.thread_serve, api.thread_daily_update]]:
+    signal.signal(signal_, lambda signum,frame: exit_handler(interface, signum, frame))
+  for thread in [threading.Thread(target=method) for method in [interface.thread_serve, interface.thread_daily_update]]:
     thread.start()
-  while api.continue_.is_set():
+  while interface.continue_.is_set():
     # シグナルハンドリング用のループ
     time.sleep(1)
   join_threads()

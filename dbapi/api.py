@@ -364,6 +364,7 @@ class TamahiyoCoreAPI(TamahiyoCoreHelper):
     super(TamahiyoCoreAPI, self).__init__()
 
   def daily_update(self):
+    # プレイヤーそれぞれのレートを毎日プロットし、31日以上前のものは消す
     for user in db_session.query(User).all():
       rate_prev_30days = loads(user.rate_prev_30days)
       rate_prev_30days.append(user.rate)
