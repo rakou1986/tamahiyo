@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #coding: utf-8
 
-from api import TamahiyoCoreAPI
+from services import TamahiyoCoreService
 from models import (db_session, GeneralRecord, User,
   UserAlias, PersonalRecord, Session, RoomNumberPool)
 
@@ -9,7 +9,7 @@ import random
 from json import dumps, loads
 import time
 
-tama = TamahiyoCoreAPI()
+tama = TamahiyoCoreService()
 
 def users_random_pop(users):
   user = users.pop(random.choice(range(len(users))))

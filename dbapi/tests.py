@@ -14,10 +14,10 @@ from json import loads, dumps
 import unittest
 from sqlalchemy.orm.exc import NoResultFound
 
-from api import TamahiyoCoreAPI
+from services import TamahiyoCoreService
 from models import db_session, GeneralRecord, User, UserAlias, PersonalRecord
 
-tama = TamahiyoCoreAPI()
+tama = TamahiyoCoreService()
 
 def get_user(name):
   return db_session.query(User).filter(User.name==name).one()

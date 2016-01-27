@@ -8,7 +8,7 @@ XMLRPCサーバーによるインターフェイスとコントローラー。
 """
 
 import conf
-from api import TamahiyoCoreAPI
+from services import TamahiyoCoreService
 
 import os
 import signal
@@ -23,7 +23,7 @@ day = 60 * 60 * 24
 class XMLRPCInterface(object):
   def __init__(self):
     self.server = SimpleXMLRPCServer(conf.APISOCKNAME, requestHandler=SimpleXMLRPCRequestHandler, allow_none=True)
-    self.server.register_instance(TamahiyoCoreAPI())
+    self.server.register_instance(TamahiyoCoreService())
     self.server.register_introspection_functions() # テストの便利用、後で外す
     self.rpc = xmlrpclib.ServerProxy(conf.APISERVER)
     self.continue_ = threading.Event()

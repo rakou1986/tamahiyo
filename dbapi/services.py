@@ -21,7 +21,7 @@ from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from models import (db_session, GeneralRecord, User,
   UserAlias, PersonalRecord, Session, RoomNumberPool)
 
-class TamahiyoCoreHelper(object):
+class TamahiyoHelper(object):
   def __init__(self):
     self._initialize_rnp()
 
@@ -363,9 +363,9 @@ class TamahiyoCoreHelper(object):
     return s.rstrip("_")
 
 
-class TamahiyoCoreAPI(TamahiyoCoreHelper):
+class TamahiyoCoreService(TamahiyoHelper):
   def __init__(self):
-    super(TamahiyoCoreAPI, self).__init__()
+    super(TamahiyoCoreService, self).__init__()
 
   def daily_update(self):
     # プレイヤーそれぞれのレートを毎日プロットし、31日以上前のものは消す
