@@ -39,7 +39,14 @@ Apache 2.2.22(Ubuntu)
 
 インストール方法
 ===================
+
+次のように依存パッケージをインストールする。
+
+pip install -r requirements.txt
+aptitude install python-matplotlib=1.3.1-1ubuntu5
+
 #TODO
+
 
 
 使用方法
