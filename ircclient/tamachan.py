@@ -46,32 +46,22 @@ class Tamachan(object):
     except socket.error:
       self.continue_.clear()
 
-  def _announce(self, sock_ipc):
-    if conf.ANNOUNCE_INTERVAL < (time.time() - self.announce_timer):
-      for channel in conf.CHANNELS:
-        msg = ":%s!~%s@localhost PRIVMSG %s :naisen?" % (
-            conf.NICKNAME,
-            conf.NICKNAME,
-            channel.encode(conf.ENCODING))
-        self._send(sock_ipc, msg, service_thread)
-      self.announce_timer = time.time()
-
   def irc_proxy_thread(self):
-    sock_ipc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock_ipc.bind(irc_proxy_thread)
-    sock_ipc.setblocking(0)
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock_inter_thread = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock_inter_thread.bind(irc_proxy_thread)
+    sock_inter_thread.setblocking(0)
+    sock_irc_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
-      sock.connect(conf.IRCSERVER)
-      sock.setblocking(0)
-      sock.send("NICK %s\r\n" % conf.NICKNAME)
-      sock.send("USER %s 0 * %s\r\n" % (conf.NICKNAME, conf.NICKNAME))
+      sock_irc_client.connect(conf.IRCSERVER)
+      sock_irc_client.setblocking(0)
+      sock_irc_client.send("NICK %s\r\n" % conf.NICKNAME)
+      sock_irc_client.send("USER %s 0 * %s\r\n" % (conf.NICKNAME, conf.NICKNAME))
       for channel in conf.CHANNELS:
-        sock.send("JOIN %s\r\n" % channel.encode(conf.ENCODING))
-      if not self._select(sock, 120):
+        sock_irc_client.send("JOIN %s\r\n" % channel.encode(conf.ENCODING))
+      if not self._select(sock_irc_client, 120):
         print "connect timeout"
         self.continue_.clear()
-      msg = sock.recv(bufsize)
+      msg = sock_irc_client.recv(bufsize)
       print msg
       pong_host, tail = msg[1:].split(" ", 1)
     except socket.error:
@@ -81,8 +71,8 @@ class Tamachan(object):
       print "Exception"
       self.continue_.clear() # is_set() == True
     while self.continue_.is_set():
-      if self._select(sock, conf.POLL_INTERVAL):
-        msg = sock.recv(bufsize)
+      if self._select(sock_irc_client, conf.POLL_INTERVAL):
+        msg = sock_irc_client.recv(bufsize)
         if msg == "":
           print self.continue_.is_set()
           self.continue_.clear()
@@ -92,21 +82,31 @@ class Tamachan(object):
         else:
           print [msg]
           if "PING" in msg:
-            self._send(sock, "PONG %s\r\n" % pong_host)
+            self._send(sock_irc_client, "PONG %s\r\n" % pong_host)
           if "ERROR" in msg:
             if "Ping timeout" in msg:
               self.continue_.clear()
               print "ping timeout"
               continue
-          self._send(sock_ipc, msg, service_thread)
-      if self._select(sock_ipc, conf.POLL_INTERVAL):
-        msg = sock_ipc.recv(bufsize)
-        self._send(sock, msg)
+          self._send(sock_inter_thread, msg, service_thread)
+      if self._select(sock_inter_thread, conf.POLL_INTERVAL):
+        msg = sock_inter_thread.recv(bufsize)
+        self._send(sock_irc_client, msg)
         print [msg]
-      self._announce(sock_ipc)
-    self._send(sock, "QUIT\r\n")
-    sock.close()
-    sock_ipc.close()
+
+      # 定期POST
+      if conf.ANNOUNCE_INTERVAL < (time.time() - self.announce_timer):
+        for channel in conf.CHANNELS:
+          msg = ":%s!~%s@localhost PRIVMSG %s :naisen?" % (
+              conf.NICKNAME,
+              conf.NICKNAME,
+              channel.encode(conf.ENCODING))
+          self._send(sock_inter_thread, msg, service_thread)
+        self.announce_timer = time.time()
+
+    self._send(sock_irc_client, "QUIT\r\n")
+    sock_irc_client.close()
+    sock_inter_thread.close()
     print "irc_proxy_thread end"
 
   def service_thread(self):
