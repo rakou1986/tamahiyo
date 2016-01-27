@@ -1,6 +1,12 @@
 #!/usr/bin/env python
 #coding: utf-8
 
+"""
+XMLRPCサーバーによるインターフェイスとコントローラー。
+
+サーバーはシングルスレッドで、１リクエストづつ順番に処理される。
+"""
+
 import conf
 from api import TamahiyoCoreAPI
 

@@ -1,6 +1,14 @@
 #!/usr/bin/env python
 #coding: utf-8
 
+"""
+IRCクライアント(main.py)にインタラクティブシェルとしての機能を
+取り付けるためのプラグイン。
+
+現状では #こっこ #たまひよ 専用だが、このファイルを編集すれば
+どのようなシェルにも作り替えることができる。
+"""
+
 import conf
 
 import datetime

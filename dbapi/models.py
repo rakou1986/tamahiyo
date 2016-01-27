@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 #coding: utf-8
 
+"""
+ORMによるsqlite3データベースの定義
+"""
+
 import conf
 
 import os
@@ -20,7 +24,8 @@ Base = declarative_base()
 
 class GeneralRecord(Base):
   """
-  部屋情報。そのまま戦績になる。
+  部屋情報。
+  部屋が閉じられると、そのまま戦績になる。
   個人戦績以外の共通情報
   """
   __tablename__ = "general_records"

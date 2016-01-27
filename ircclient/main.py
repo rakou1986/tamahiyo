@@ -2,7 +2,11 @@
 #coding: utf-8
 
 """
+IRCをインターフェイスとするインタラクティブシェルのコントローラー。
+利用者とservicesを仲介する。
 
+シェルの機能はservicesに実装される。
+指定したIRCチャンネルに常駐する。
 """
 
 import conf
@@ -134,7 +138,7 @@ def exit_handler(irc_client, signum=None, frame=None):
   join_threads()
   sys.exit(0)
 
-def irc_client_life_cycle():
+def life_cycle():
   irc_client = IRCClient()
   for signal_ in [signal.SIGINT, signal.SIGTERM]:
     signal.signal(signal_, lambda signum,frame: exit_handler(irc_client, signum, frame))
@@ -147,7 +151,7 @@ def irc_client_life_cycle():
 
 def main():
   while True:
-    irc_client_life_cycle()
+    life_cycle()
     time.sleep(60) # 落ちたら1分後に再接続
 
 if __name__ == "__main__":
