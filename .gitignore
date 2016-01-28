@@ -1,0 +1,5 @@
+*.pyc
+*.tmp
+*.sqlite3
+*.sqlite3.testbase
+activate
