@@ -306,8 +306,6 @@ class TamahiyoHelper(object):
       if gr.rating_match:
         pr.change_width = self._calc_change_width(pr)
         pr.determined_rate = pr.user.rate + (pr.change_width if pr.won else -pr.change_width)
-    for pr in members:
-      if pr.determined_rate is not None:
         pr.user.rate = pr.determined_rate
     db_session.flush()
 
@@ -615,7 +613,10 @@ class TamahiyoCoreService(TamahiyoHelper):
     return dumps((True, returns))
 
   def fix_prev_result(self, json):
-    """直前の勝敗をつけ直す"""
+    """直前の勝敗をつけ直す。
+    なぜ直前かといえば、データ構造の都合上、勝敗をつけたあとにゲームを募集したり参加したりすると、
+    修正すべき戦跡を指定することがIRC上からは困難になるため。
+    """
     args = loads(json)
     print args
     user = self._whoami(args["caller"])
@@ -642,6 +643,13 @@ class TamahiyoCoreService(TamahiyoHelper):
     returns = self._construct_room_info(gr, pr.user)
     returns.update({"members": [self._construct_member_info(member) for member in members]})
     return dumps((True, returns))
+
+  def fix_past_result(self, json):
+    """過去の勝敗をつけ直す。
+    つけ間違いをしても修正を待たずにゲームを続けてよいことになっているが、
+    直前(fix_prev_result)よりもさかのぼる場合は、レート修正のロジックが異なる。
+    """
+    pass
 
   def change_game_ipaddr(self, json):
     """代理"""
