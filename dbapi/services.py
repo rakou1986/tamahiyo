@@ -207,6 +207,14 @@ class TamahiyoHelper(object):
     for pr in team2:
       pr.team = conf.TEAM2
 
+    # チーム分け当時のレートを保存。勝敗による変動レート計算用。
+    # これがないとゲーム中にレートが手動で修正されたとき、チームの合計レートが
+    # 変わるせいで、勝敗によるレート変動に過不足が出る。
+    for pr in team1 + team2:
+      pr.rate_at_umari = pr.user.rate
+
+    db_session.flush()
+
   def _is_room_owner(self, channel, caller):
     user = self._whoami(caller)
     if user is None:
@@ -305,9 +313,10 @@ class TamahiyoHelper(object):
       else:
         pr.user.lost_count += 1
       if gr.rating_match:
-        pr.change_width = self._calc_change_width(pr)
-        pr.determined_rate = pr.user.rate + (pr.change_width if pr.won else -pr.change_width)
-        pr.user.rate = pr.determined_rate
+        cw = pr.change_width = self._calc_change_width(pr)
+        pr.user.rate = pr.user.rate + (cw if pr.won else -cw)
+        pr.determined_rate = pr.rate_at_umari + (cw if pr.won else -cw)
+
     db_session.flush()
 
   def _calc_change_width(self, pr):
@@ -316,9 +325,9 @@ class TamahiyoHelper(object):
     Ra, Rb = 0, 0
     for pr_ in pr.general_record.personal_records:
       if pr.team == pr_.team:
-        Ra += pr_.user.rate
+        Ra += pr_.rate_at_umari
       else:
-        Rb += pr_.user.rate
+        Rb += pr_.rate_at_umari
     Ea = 1.0 / (1 + (10**((Rb - Ra) / 400.0)))
     change_width = int(K * (int(pr.won) - Ea))
     if pr.won is False:
@@ -493,7 +502,6 @@ class TamahiyoCoreService(TamahiyoHelper):
       gr.rating_match = True
       db_session.flush()
       self._team_assign(gr)
-      db_session.flush()
       print [gr.umari_at, gr.rating_match]
     self._save_session(args["hostname"], user)
     db_session.commit()

@@ -124,7 +124,8 @@ class PersonalRecord(Base):
   team = Column(Integer)
   won = Column(Boolean)
   change_width = Column(Integer)  # レートの変動量
-  determined_rate = Column(Integer) # 変動後のレート
+  determined_rate = Column(Integer) # 変動後のレート。推移グラフに使える
+  rate_at_umari = Column(Integer) # 部屋が埋まりチームを決めた当時のレート。勝敗のレート計算に使う
 
   # User:PersonalRecord = 1:multi
   user_id = Column(Integer, ForeignKey("users.id"), nullable=False)

@@ -41,33 +41,33 @@ def main():
     columns = line.split()
     if len(columns) != 11: # 4v4 以外はとりあえず飛ばす
       continue
-    warriors = columns[1:9]
+    players = columns[1:9]
     winner_change = int(columns[9])
     loser_change = int(columns[10])
 
-    # 仮に2000/01/01 00:00:00とする
-    tmptime = 946652400
+    tmptime = 946652400 # 仮に2000/01/01 00:00:00とする
     gr = GeneralRecord(tmptime, u"#こっこたまひよ", 0, u"someone")
     gr.active = False
     db_session.add(gr)
     db_session.flush()
 
-    for i, warrior in enumerate(warriors):
-      pr = PersonalRecord(users.index(warrior)+1, gr.id)
+    for i, player in enumerate(players):
+      pr = PersonalRecord(users.index(player)+1, gr.id)
       pr.active = False
+      pr.rate_at_umari = pr.user.rate
       db_session.add(pr)
       db_session.flush()
       if i < 4:
         pr.won = True
         pr.team = 1
         pr.change_width = winner_change
-        pr.determined_rate = pr.user.rate + winner_change
+        pr.determined_rate = pr.rate_at_umari + winner_change
         pr.user.won_count += 1
       else:
         pr.won = False
         pr.team = 2
         pr.change_width = loser_change
-        pr.determined_rate = pr.user.rate - loser_change
+        pr.determined_rate = pr.rate_at_umari - loser_change
         pr.user.lost_count += 1
       pr.user.rate = pr.determined_rate
       db_session.flush()
