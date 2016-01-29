@@ -136,7 +136,7 @@ def mk_room_str(params):
   params.update({"room_owner": " ".join([s[0], s[1:]])})
   if not params["game_ipaddr"]:
     params.update({"game_ipaddr": u"N/A"})
-  bases.append(u"[%(room_number)d][%(room_owner)s]%(game_ipaddr)s こっこ内戦" % params)
+  bases.append(u"[%(room_number)d][%(id)d][%(room_owner)s]%(game_ipaddr)s こっこ内戦" % params)
   if params["room_name"]:
     bases.append(u"@%(room_name)s" % params)
   if params["umari_at"] is None:

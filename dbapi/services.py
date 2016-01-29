@@ -250,6 +250,7 @@ class TamahiyoHelper(object):
       if pr.active:
         members.append(self._construct_member_info(pr))
     return {
+      "id": gr.id,
       "created_at": gr.created_at,
       "channel": gr.channel,
       "room_name": gr.room_name,
