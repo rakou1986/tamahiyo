@@ -1,6 +1,15 @@
 #!/usr/bin/env python
 #coding: utf-8
 
+# ローカルの変更を無視
+# git update-index --assume-unchanged
+# 元に戻す
+# git update-index --no-assume-unchanged
+#
+# 無視ファイルの探し方
+# git ls-files -v
+# で、行頭が小文字 h となっているもの
+
 from os.path import abspath, dirname, join
 import sys
 
