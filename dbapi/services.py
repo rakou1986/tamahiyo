@@ -849,9 +849,6 @@ class TamahiyoCoreService(TamahiyoHelper):
       return dumps((False,))
     if not caller.admin:
       return dumps((False,))
-    for pr in target.personal_records:
-      if pr.active:
-        return dumps((False,))
     target.rate = args["rate"]
     db_session.commit()
     return dumps((True,))
