@@ -101,6 +101,7 @@ class IRCClient(object):
       # 定期POST
       if conf.ANNOUNCE_INTERVAL < (time.time() - self.announce_timer):
         for channel in conf.CHANNELS:
+          # 架空の「内戦？」コマンドを受信して応答する。、
           msg = ":%s!~%s@localhost PRIVMSG %s :naisen?" % (
               conf.NICKNAME,
               conf.NICKNAME,
