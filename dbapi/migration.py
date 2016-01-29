@@ -53,10 +53,10 @@ def main():
 
     for i, player in enumerate(players):
       pr = PersonalRecord(users.index(player)+1, gr.id)
-      pr.active = False
-      pr.rate_at_umari = pr.user.rate
       db_session.add(pr)
       db_session.flush()
+      pr.active = False
+      pr.rate_at_umari = pr.user.rate
       if i < 4:
         pr.won = True
         pr.team = 1
