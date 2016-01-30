@@ -44,6 +44,19 @@ class TamahiyoHelper(object):
   def _whoami(
         self, name, alias_contain=True, forward_match=False,
         partial_match=False, backward_match=False, one=False):
+    """
+    nameからUserを探す。
+    User.admin User.enable
+    if True in [pr.active for pr in User.personal_records]:
+    といった真偽値で、操作が可能かどうか判定するため、たいていの操作はここから始まる。
+
+    forward_match, partial_match, backward_matchのどれかをTrueに指定する場合は、
+    どれか1つだけにしなければならない。
+
+    nameの末尾のアンダースコアは取り除かれる。
+    IRCの事情をケアする仕様。
+    """
+    # 前方一致、部分一致、後方一致
     if forward_match or partial_match or backward_match:
       if forward_match: base = u"%s%%"
       if partial_match: base = u"%%%s%%"
@@ -59,6 +72,7 @@ class TamahiyoHelper(object):
         for alias in aliases:
           if alias.user.enable and (alias.user not in users):
             users.append(alias.user)
+      # 唯一の該当者だった場合のみ結果がほしい場合
       if one:
         if len(users) == 1:
           return users[0]
@@ -66,6 +80,7 @@ class TamahiyoHelper(object):
           return None
       else:
         return users if users else None
+    # 完全一致
     else:
       try:
         return db_session.query(User
@@ -83,6 +98,7 @@ class TamahiyoHelper(object):
       return None
 
   def _pick_room_number(self):
+    """部屋番号をプールから取得"""
     rnp = self._get_rnp()
     numbers = sorted(loads(rnp.jsonstring))
     room_number = numbers.pop(0)
@@ -91,6 +107,7 @@ class TamahiyoHelper(object):
     return room_number
 
   def _acquire_room_number(self, number):
+    """部屋番号をプールに返却"""
     rnp = self._get_rnp()
     numbers = sorted(loads(rnp.jsonstring))
     numbers.append(number)
@@ -98,6 +115,7 @@ class TamahiyoHelper(object):
     db_session.flush()
 
   def _get_active_pr(self, user):
+    """Userが入室中かどうか調べる。Noneなら入室中ではないということ。"""
     q = db_session.query(PersonalRecord
       ).filter(PersonalRecord.user_id == user.id
       ).filter(PersonalRecord.active == True
@@ -108,6 +126,7 @@ class TamahiyoHelper(object):
       return None
 
   def _get_dst_gr(self, channel, room_number):
+    """指定された部屋番号の部屋(gr/general_record)を返す"""
     q = db_session.query(GeneralRecord
       ).filter(GeneralRecord.active==True
       ).filter(GeneralRecord.channel==channel)
@@ -127,18 +146,20 @@ class TamahiyoHelper(object):
       return None
 
   def _join_to_room(self, user, general_record):
+    """参加表明"""
     pr = PersonalRecord(user.id, general_record.id)
     db_session.add(pr)
     db_session.flush()
     
   def _get_inside_member_prs(self, general_record):
+    """部屋(general_record)への参加者(pr/personal_record)リスト"""
     members = []
     for pr in general_record.personal_records:
       if pr.active:
         members.append(pr)
     return members
 
-  # 8人の分けならこれでいい。任意の人数版がだめなときの予備
+  # 8人固定のチーム分け。任意の人数版がだめなときの予備
   # def _team_assign(self, general_record):
   #   members = self._get_inside_member_prs(general_record=general_record)
   #   prs = [pr for pr in members]
@@ -162,8 +183,8 @@ class TamahiyoHelper(object):
   #   for pr in team2:
   #     pr.team = conf.TEAM2
 
-  # 任意の人数をチーム分け
   def _team_assign(self, general_record):
+    """任意の人数をチーム分け"""
 
     # 10進数（自然数）をn進数に変換する関数。拾い物。動作確認済み
     def convert_natural_radix_10_to_n(x, n):
@@ -216,6 +237,7 @@ class TamahiyoHelper(object):
     db_session.flush()
 
   def _is_room_owner(self, channel, caller):
+    """コマンド利用者が部屋の主かどうか調べる。"""
     user = self._whoami(caller)
     if user is None:
       return False
@@ -228,6 +250,7 @@ class TamahiyoHelper(object):
     return False
   
   def _execute_breakup(self, gr):
+    """部屋を解散する。"""
     gr.active = False
     gr.brokeup = True
     members = []
@@ -240,6 +263,7 @@ class TamahiyoHelper(object):
     return members
 
   def _construct_member_info(self, pr):
+    """SQLAlchemyオブジェクトを、単純な辞書に構成し直す。"""
     return {
         "name": pr.user.name,
         "rate": pr.user.rate,
@@ -250,6 +274,7 @@ class TamahiyoHelper(object):
         }
     
   def _construct_room_info(self, gr, user=None):
+    """SQLAlchemyオブジェクトを、単純な辞書に構成し直す。"""
     caller = None
     if user:
       caller = user.name
@@ -276,6 +301,7 @@ class TamahiyoHelper(object):
       }
 
   def _rollback_result(self, gr):
+    """勝敗の付け間違いに伴う、誤った勝敗数と、誤ったレート変動を差し戻す。"""
     members = db_session.query(PersonalRecord
       ).filter(PersonalRecord.general_record_id == gr.id
       ).filter(PersonalRecord.won != None
@@ -291,6 +317,7 @@ class TamahiyoHelper(object):
     return members
 
   def _save_result(self, owner_pr, won, rollback=False):
+    """勝敗をつける。rollback=Trueは、訂正モード"""
     gr = owner_pr.general_record
     enemy_team = conf.TEAM2 if conf.TEAM1 == owner_pr.team else conf.TEAM1
     gr.winner = owner_pr.team if won else enemy_team
@@ -320,7 +347,12 @@ class TamahiyoHelper(object):
     db_session.flush()
 
   def _calc_change_width(self, pr):
-    # イロレーティングを基本にしたレートシステム
+    """
+    レーティングシステムそのもの。イロレーティング。
+    ただしイロレーティングでは通常K=16またはK=32とするところを、K=26としている。
+    K=26は、このシステムを旧システム（イロレーティングがベース）に近づけるため、
+    レート変動幅の分布を見ながら根性で探り出した経験的な値。
+    """
     K = 26
     Ra, Rb = 0, 0
     for pr_ in pr.general_record.personal_records:
@@ -344,21 +376,12 @@ class TamahiyoHelper(object):
     db_session.flush()
 
   def _get_std_score(self, user, rates):
-    # 偏差値は平均との差を10倍して標準偏差で割って50足す
-    # 00:50 (aikuchi) 標準偏差は、各プレイヤーのレートの平均との差を２乗して
-    # 00:50 (aikuchi) 合計したもののルート
-    # 00:50 (aikuchi) これも簡単
-    # 00:51 (rakou1986_ffxi) そう言われると簡単ｗ
-    # 00:51 (rakou1986_ffxi) ありがとう
-    # 00:52 (aikuchi) }a,
-    # 00:52 (aikuchi) 1/N忘れた
-    # 00:52 (aikuchi) プレイヤー数で割ったあとにルートですね
-    # 00:54 (rakou1986_ffxi) じゃあ
-    # 00:54 (ninneko___) 結局全機能を把握できていない
-    # 00:55 (aikuchi) ゴミみたいな機能もあるし、ごっそり削ってもらってもOK
-    # 00:55 (aikuchi) あとからでも機能は追加できますしね
-    # 00:55 (ninneko___) いったんゲームに参加できればいいくらいのほうがいいな
-    # 00:55 (rakou1986_ffxi) 標準偏差は、平均レートとの差の2乗、全員分の平均　のルート
+    """
+    プレイヤーの偏差値
+    偏差値(std_score)は平均(avg)と対象プレイヤーのレート(user.rate)の差を10倍して
+    標準偏差(sigma_x)で割って50足したもの。
+    標準偏差(sigma_x)は、「各プレイヤーの、レートと平均の差の2乗」の平均のルート。
+    """
     n = len(rates)
     if n == 1:
       return 0.0
@@ -368,6 +391,12 @@ class TamahiyoHelper(object):
     return std_score
 
   def _rstrip_underscore(self, s):
+    """
+    ルーター再起などでPing Timeoutなどを待たずにIRCに再接続すると、nicknameの
+    末尾にアンダースコアが追加されることがある。
+
+    IRCの事情に配慮して、プレイヤー名の末尾にはアンダースコアを使えない仕様にした。
+    """
     return s.rstrip("_")
 
 
@@ -376,7 +405,11 @@ class TamahiyoCoreService(TamahiyoHelper):
     super(TamahiyoCoreService, self).__init__()
 
   def daily_update(self):
-    # プレイヤーそれぞれのレートを毎日プロットし、31日以上前のものは消す
+    """
+    プレイヤーのレートをプロットするFIFOキューを更新する。
+    現在のレートを追加し、31個前のものは消す。
+    dailyに定期実行するためのタイマーは関数を利用する側で用意する必要がある。
+    """
     for user in db_session.query(User).all():
       rate_prev_30days = loads(user.rate_prev_30days)
       rate_prev_30days.append(user.rate)
@@ -386,7 +419,11 @@ class TamahiyoCoreService(TamahiyoHelper):
     db_session.commit()
 
   def add_user(self, json):
-    """たまひよ会員新規登録"""
+    """
+    たまひよ会員新規登録。
+    名前の末尾のアンダースコアは取り除く。
+    IRCの事情をケアする仕様。
+    """
     args = loads(json)
     print args
     user = self._whoami(args["caller"], alias_contain=False)
@@ -421,6 +458,7 @@ class TamahiyoCoreService(TamahiyoHelper):
     return dumps((True,))
 
   def delete_alias(self, json):
+    """別名削除"""
     args = loads(json)
     print args
     user = self._whoami(args["caller"])
@@ -472,7 +510,7 @@ class TamahiyoCoreService(TamahiyoHelper):
     return dumps((True, self._construct_room_info(gr, user)))
 
   def join_room(self, json):
-    """入室"""
+    """入室。参加者は8人まで。 8人になると自動でチーム分けされる。"""
     args = loads(json)
     print args
     user = self._whoami(args["caller"])
@@ -508,7 +546,7 @@ class TamahiyoCoreService(TamahiyoHelper):
     return dumps((True, self._construct_room_info(gr, user)))
 
   def umari_force(self, json):
-    """＄うまりコマンド"""
+    """参加者が8人未満のとき募集を締め切ってゲームを開始する。ノーレート戦になる"""
     args = loads(json)
     print args
     pr = self._is_room_owner(args["channel"], args["caller"])
@@ -687,7 +725,6 @@ class TamahiyoCoreService(TamahiyoHelper):
     return dumps((True, [self._construct_room_info(gr) for gr in rooms]))
 
   def get_room_info(self, json):
-    # TODO: test
     """参加者"""
     args = loads(json)
     print args
@@ -697,6 +734,7 @@ class TamahiyoCoreService(TamahiyoHelper):
     return dumps((True, self._construct_room_info(gr)))
 
   def get_hurried_members(self, json):
+    """はよコマンドで呼び出されることを許可したプレイヤーリスト"""
     args = loads(json)
     print args
     users = db_session.query(User
@@ -709,6 +747,7 @@ class TamahiyoCoreService(TamahiyoHelper):
     return dumps((True, names))
 
   def allow_hurry(self, json):
+    """はよコマンドで呼び出されることを許可する"""
     args = loads(json)
     user = self._whoami(args["caller"])
     if user is None:
@@ -718,6 +757,7 @@ class TamahiyoCoreService(TamahiyoHelper):
     return dumps((True,))
 
   def disallow_hurry(self, json):
+    """はよコマンドで呼び出されることを拒否する（標準）"""
     args = loads(json)
     user = self._whoami(args["caller"])
     if user is None:
@@ -728,6 +768,7 @@ class TamahiyoCoreService(TamahiyoHelper):
 
   # 07:11 (koujan) rakou1986 719位 レート:440(先月比: 3) 戦績:136勝172敗 (勝率: 44.15%)
   def get_user_info(self, json):
+    """プレイヤー情報"""
     args = loads(json)
     print args
     users = self._whoami(args["username"], forward_match=True)
@@ -749,7 +790,14 @@ class TamahiyoCoreService(TamahiyoHelper):
     return dumps((True, user_infos))
 
   def get_kdata(self, json):
-    """leftsのrightsに対する勝敗数"""
+    """
+    leftsのrightsに対する勝敗数。
+    leftsとrightsには複数のプレイヤーを指定可能。
+    rightsは省略可能で、その場合は単にleftsの勝敗数を返す。
+
+    全試合を指定されたプレイヤーでAND検索し、共通の試合のうち
+    敵味方関係が合うものから、勝敗数を数える。
+    """
     args = loads(json)
     print args
     lefts = []
@@ -765,7 +813,10 @@ class TamahiyoCoreService(TamahiyoHelper):
         return dumps((False,))
       rights.append(user)
 
-    grid_prs = {} # {grid: [pr, ...]}
+    # GeneralRecord.id(grid/試合)をキー、
+    # GeneralRecord.personal_records(pr/参加者)を値とする辞書
+    # {grid: [pr, ...]}
+    grid_prs = {}
     for user in lefts+rights:
       for pr in user.personal_records:
         if pr.won is not None:
@@ -789,14 +840,14 @@ class TamahiyoCoreService(TamahiyoHelper):
           lefts_.append(pr)
         if pr.user in rights:
           rights_.append(pr)
-      # 左辺のUsersは味方同士ですか？
+      # leftsのプレイヤーが味方同士でなければスキップ
       if len(set([pr.team for pr in lefts_])) != 1:
         continue
-      # 右辺のUsersは味方同士ですか？
+      # rightsのプレイヤーが味方同士でなければスキップ
       if rights_:
         if len(set([pr.team for pr in rights_])) != 1:
           continue
-        # 左辺と右辺は敵同士でしたか？
+        # leftsとrightsが敵同士でなければスキップ
         if lefts_[0].team == rights_[0].team:
           continue
       if lefts_[0].won:
@@ -815,6 +866,7 @@ class TamahiyoCoreService(TamahiyoHelper):
     return dumps((True, [admin.name for admin in admins]))
 
   def give_authority(self, json):
+    """管理権限を付与"""
     args = loads(json)
     print args
     caller = self._whoami(args["caller"])
@@ -828,6 +880,7 @@ class TamahiyoCoreService(TamahiyoHelper):
     return dumps((True,))
 
   def deprive_authority(self, json):
+    """管理権限を剥奪"""
     args = loads(json)
     print args
     caller = self._whoami(args["caller"])
@@ -841,6 +894,7 @@ class TamahiyoCoreService(TamahiyoHelper):
     return dumps((True,))
 
   def update_rate(self, json):
+    """レートの手動変更"""
     args = loads(json)
     print args
     caller = self._whoami(args["caller"])
@@ -854,6 +908,7 @@ class TamahiyoCoreService(TamahiyoHelper):
     return dumps((True,))
 
   def set_user_disable(self, json):
+    """プレイヤー凍結"""
     args = loads(json)
     print args
     caller = self._whoami(args["caller"])
@@ -876,6 +931,7 @@ class TamahiyoCoreService(TamahiyoHelper):
     return dumps((True,))
 
   def set_user_enable(self, json):
+    """プレイヤー凍結解除"""
     args = loads(json)
     print args
     caller = self._whoami(args["caller"])
@@ -893,6 +949,7 @@ class TamahiyoCoreService(TamahiyoHelper):
     return dumps((True,))
 
   def get_disable_users(self, json):
+    """凍結済みプレイヤーリスト"""
     args = loads(json)
     print args
     caller = self._whoami(args["caller"])
