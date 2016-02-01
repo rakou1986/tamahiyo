@@ -43,7 +43,7 @@ class GeneralRecord(Base):
   winner = Column(Unicode)
   completed_at = Column(Integer)
   rating_match = Column(Boolean) # 8人以外のゲームも記録するなら使う
-  brokeup = Column(Boolean)
+  brokeup = Column(Boolean) # 解散したらTrue
 
   def __init__(self, created_at, channel, room_number, room_owner):
     self.created_at = created_at
