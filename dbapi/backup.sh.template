@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# sqlite3データベースのバックアップ方法。
+# dbapiを使用中でもバックアップ可能。
+# インストールの状況に応じて下記のパスを設定し、cronでdaily実行するとよい。
+# http://motel-on-jupiter.sakuraweb.com/?p=456
+sqlite3 /path/to/tamahiyo.sqlite3 ".backup /path/to/`date '+%Y%m%d_%H%M%S'`_tamahiyo.sqlite3.backup"
+
+# 120日以上前のバックアップを削除する例
+find /path/to/var/backup/tamahiyo/ -name "*.backup" -mtime +120 -delete
