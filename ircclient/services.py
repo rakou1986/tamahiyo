@@ -342,14 +342,29 @@ def save_result_lost(args, argstring):
     return "".join([mkmsg("NOTICE", args, m) for m in msgs])
   return mkmsg("NOTICE", args, msg)
 
-def fix_prev_result(args, argstring):
-  msg = u"ホストは勝敗をつけてから、次の部屋に入るまでの間、勝敗を訂正できます。使い方: 訂正＠かち 訂正＠まけ"
-  if argstring in [u"勝ち", u"かち", u"負け", u"まけ"]:
-    if argstring in [u"勝ち", u"かち"]:
+def fix_result(args, argstring):
+  msg = u"ホストと管理者は、勝敗を訂正できます。ホスト視点で勝敗を入力してください。使い方: 訂正＠かち＠ゲームID 訂正＠まけ＠ゲームID"
+  if argstring:
+    s = argstring
+    args.update({"room_id": None})
+
+    if u"@" in s:
+      won, room_id = s.strip().split(u"@", 1)
+      try:
+        args.update({"room_id": int(room_id.strip())})
+      except Exception:
+        pass
+    else:
+      won = s
+
+    if won in [u"勝ち", u"かち"]:
       args.update({"won": True})
-    if argstring in [u"負け", u"まけ"]:
+    elif won in [u"負け", u"まけ"]:
       args.update({"won": False})
-    res = loads(rpc.fix_prev_result(dumps(args)))
+    else:
+      return mkmsg("NOTICE", args, msg)
+
+    res = loads(rpc.fix_result(dumps(args)))
     if res[0]:
       params = res[1]
       msgs = mk_result_strs(params)
@@ -627,7 +642,7 @@ commands = {
   u"$勝ち": save_result_won,     # $
   u"$まけ": save_result_lost,    # $
   u"$負け": save_result_lost,    # $
-  u"訂正": fix_prev_result,      # @
+  u"訂正": fix_result,      # @
   u"$代理": change_game_ipaddr,   # @
   u"$だいり": change_game_ipaddr, # @
   u"内戦？": get_active_rooms,   # 

@@ -300,6 +300,12 @@ class TamahiyoHelper(object):
       "caller": caller,
       }
 
+  def _get_owner_pr(self, general_record):
+    for pr in general_record.personal_records:
+      if pr.user.name == general_record.room_owner:
+        return pr
+    return None
+    
   def _rollback_result(self, gr):
     """勝敗の付け間違いに伴う、誤った勝敗数と、誤ったレート変動を差し戻す。"""
     members = db_session.query(PersonalRecord
@@ -659,44 +665,54 @@ class TamahiyoCoreService(TamahiyoHelper):
     db_session.commit()
     return dumps((True, returns))
 
-  def fix_prev_result(self, json):
-    """直前の勝敗をつけ直す。
-    なぜ直前かといえば、データ構造の都合上、勝敗をつけたあとにゲームを募集したり参加したりすると、
-    修正すべき戦跡を指定することがIRC上からは困難になるため。
-    """
+  def fix_result(self, json):
+    """勝敗をつけ直す。"""
     args = loads(json)
     print args
     user = self._whoami(args["caller"])
     if user is None:
       return dumps((False,))
-    try:
-      # UserのPersonalRecordのうち最新のレコードを取得
-      pr_id = db_session.query(
-        func.max(PersonalRecord.id)
-        ).correlate(PersonalRecord
-        ).filter(PersonalRecord.user_id==user.id).one()[0]
-      pr = db_session.query(PersonalRecord
-        ).filter(PersonalRecord.id==pr_id).one()
-    except NoResultFound:
-      return dumps((False,))
-    if (pr.general_record.room_owner != pr.user.name) or (pr.general_record.completed_at is None):
-      return dumps((False,))
-    self._save_result(pr, args["won"], rollback=True)
-    gr = pr.general_record
+
+    if type(args["room_id"]) == int:
+      try:
+        gr = db_session.query(GeneralRecord
+          ).filter(GeneralRecord.id==args["room_id"]
+          ).one()
+      except NoResultFound:
+        return dumps((False,))
+      if gr.completed_at is None:
+        return dumps((False,))
+      # 管理者かホスト自身だけが結果を訂正できる
+      if (not user.admin) and (user.name != gr.room_owner):
+        return dumps((False,))
+      owner_pr = self._get_owner_pr(gr)
+
+    else:
+      try:
+        # UserのPersonalRecordのうち最新のレコードを取得
+        pr_id = db_session.query(
+          func.max(PersonalRecord.id)
+          ).correlate(PersonalRecord
+          ).filter(PersonalRecord.user_id==user.id).one()[0]
+        pr = db_session.query(PersonalRecord
+          ).filter(PersonalRecord.id==pr_id).one()
+      except NoResultFound:
+        return dumps((False,))
+      gr = pr.general_record
+      if (gr.room_owner != pr.user.name) or (gr.completed_at is None):
+        return dumps((False,))
+      owner_pr = pr
+
+    self._save_result(owner_pr, args["won"], rollback=True)
+    gr = owner_pr.general_record
     members = []
     for member in gr.personal_records:
+      # 勝敗のついた参加者のみに限定する（入って抜けた人は除外）
       if member.won is not None:
         members.append(member)
-    returns = self._construct_room_info(gr, pr.user)
+    returns = self._construct_room_info(gr, user)
     returns.update({"members": [self._construct_member_info(member) for member in members]})
     return dumps((True, returns))
-
-  def fix_past_result(self, json):
-    """過去の勝敗をつけ直す。
-    つけ間違いをしても修正を待たずにゲームを続けてよいことになっているが、
-    直前(fix_prev_result)よりもさかのぼる場合は、レート修正のロジックが異なる。
-    """
-    pass
 
   def change_game_ipaddr(self, json):
     """代理"""
