@@ -682,30 +682,30 @@ class TamahiyoCoreTest(unittest.TestCase):
 
     # 2: aikuchi, galapon, rakou1986, koucha, ninneko, rabanastre, madou, Hexa
     data = {"caller": u"galapon", "won": False}
-    result = loads(tama.fix_prev_result(dumps(data)))
+    result = loads(tama.fix_result(dumps(data)))
     self.assertIs(result[0], False)
 
     data = {"caller": u"koucha", "won": False}
-    result = loads(tama.fix_prev_result(dumps(data)))
+    result = loads(tama.fix_result(dumps(data)))
     self.assertIs(result[0], False)
 
     data = {"caller": u"madou", "won": False}
-    result = loads(tama.fix_prev_result(dumps(data)))
+    result = loads(tama.fix_result(dumps(data)))
     self.assertIs(result[0], False)
 
     data = {"caller": u"ocham", "won": False}
-    result = loads(tama.fix_prev_result(dumps(data)))
+    result = loads(tama.fix_result(dumps(data)))
     self.assertIs(result[0], False)
 
     data = {"caller": u"fakeuser_xxx94830", "won": False}
-    result = loads(tama.fix_prev_result(dumps(data)))
+    result = loads(tama.fix_result(dumps(data)))
     self.assertIs(result[0], False)
 
     data = {
       "caller": u"aikuchi",
       "won": False,
       }
-    result = loads(tama.fix_prev_result(dumps(data)))
+    result = loads(tama.fix_result(dumps(data)))
     self.assertIs(result[0], True)
     val = result[1]
     self.assertIsNot(val["umari_at"], None)
@@ -858,34 +858,34 @@ class TamahiyoCoreTest(unittest.TestCase):
 
     # 1: madou, rakou1986, koucha, ninneko, rabanastre
     data = {"caller": u"rakou1986", "won": False}
-    result = loads(tama.fix_prev_result(dumps(data)))
+    result = loads(tama.fix_result(dumps(data)))
     self.assertIs(result[0], False)
 
     data = {"caller": u"koucha", "won": False}
-    result = loads(tama.fix_prev_result(dumps(data)))
+    result = loads(tama.fix_result(dumps(data)))
     self.assertIs(result[0], False)
 
     data = {"caller": u"ninneko", "won": False}
-    result = loads(tama.fix_prev_result(dumps(data)))
+    result = loads(tama.fix_result(dumps(data)))
     self.assertIs(result[0], False)
 
     data = {"caller": u"rabanastre", "won": False}
-    result = loads(tama.fix_prev_result(dumps(data)))
+    result = loads(tama.fix_result(dumps(data)))
     self.assertIs(result[0], False)
 
     data = {"caller": u"ocham", "won": False}
-    result = loads(tama.fix_prev_result(dumps(data)))
+    result = loads(tama.fix_result(dumps(data)))
     self.assertIs(result[0], False)
 
     data = {"caller": u"fakeuser_xxx94830", "won": False}
-    result = loads(tama.fix_prev_result(dumps(data)))
+    result = loads(tama.fix_result(dumps(data)))
     self.assertIs(result[0], False)
 
     data = {
       "caller": u"madou",
       "won": True,
       }
-    result = loads(tama.fix_prev_result(dumps(data)))
+    result = loads(tama.fix_result(dumps(data)))
     self.assertIs(result[0], True)
     val = result[1]
     self.assertIsNot(val["umari_at"], None)
