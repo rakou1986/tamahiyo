@@ -52,17 +52,20 @@ def facade(msg):
       u"channel": channel,
       u"hostname": fqdn,
       }
-    if u"@" in text:
-      key, argstring = text.split(u"@", 1)
-      msg = commands.get(key, noop)(args, argstring)
-    else:
-      msg = commands.get(text, noop)(args, None)
-    if (u"kokko" in text) or (u"kdata" in text):
-      try:
-        key, argstring = text.split(u" ", 1)
+    try:
+      if u"@" in text:
+        key, argstring = text.split(u"@", 1)
         msg = commands.get(key, noop)(args, argstring)
-      except ValueError:
+      else:
         msg = commands.get(text, noop)(args, None)
+      if (u"kokko" in text) or (u"kdata" in text):
+        try:
+          key, argstring = text.split(u" ", 1)
+          msg = commands.get(key, noop)(args, argstring)
+        except ValueError:
+          msg = commands.get(text, noop)(args, None)
+    except xmlrpclib.Fault, e:
+      msg = mkmsg("NOTICE", args, u"「%s」の入力でエラー: %s" % (text, e.faultString))
     print time.time() - t_start
     return msg
   return None
