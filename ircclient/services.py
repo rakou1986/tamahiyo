@@ -650,7 +650,7 @@ def get_disable_users(args, argstring):
   return mkmsg("NOTICE", args, msg)
 
 commands = {
-  u"新規会員": add_user,         # @
+  # u"新規会員": add_user,         # @
   u"iam": iam,                   # @
   u"別名削除": delete_alias,
   u"こっこ内戦": make_room,      # @
@@ -685,12 +685,12 @@ commands = {
   u"kokko": get_user_info,
   u"kdata": get_kdata,
   u"管理者一覧": get_admin_list,
-  u"管理権限付与": give_authority,
-  u"管理権限削除": deprive_authority,
-  u"レート変更": update_rate,
+  # u"管理権限付与": give_authority,
+  # u"管理権限削除": deprive_authority,
+  # u"レート変更": update_rate,
   u"コマンド一覧": get_command_list,
   u"説明書": get_usage_url,
-  u"凍結": set_user_disable,
-  u"凍結解除": set_user_enable,
-  u"凍結一覧": get_disable_users,
+  # u"凍結": set_user_disable,
+  # u"凍結解除": set_user_enable,
+  # u"凍結一覧": get_disable_users,
 }
