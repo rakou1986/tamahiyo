@@ -225,19 +225,39 @@ def mk_result_strs(params):
     strings.append(u" ".join([u"%(name)s:%(rate)d(%(symbol)s%(change_width)d)" % m for m in team]))
   return strings
 
+def mk_session_diff_strs(params):
+  strings = []
+  diff = params["session_diff"]
+  strings.append(u"%sさんのホストが変わりました。" % diff["username"])
+
+  d_last = datetime.datetime.fromtimestamp(diff["last_timestamp"])
+  strings.append(u"新: %s / %s / %s" % (d_last.strftime("%Y-%m-%d %H:%M:%S"), diff["last_ipaddr"], diff["last_hostname"]))
+
+  d_prev = datetime.datetime.fromtimestamp(diff["prev_timestamp"])
+  strings.append(u"旧: %s / %s / %s" % (d_prev.strftime("%Y-%m-%d %H:%M:%S"), diff["prev_ipaddr"], diff["prev_hostname"]))
+
+  return strings
+
 def make_room(args, argstring):
   msg = u"部屋を建てられませんでした。もう入っていませんか？使い方: こっこ内戦＠説明文（＠以降は省略可）"
   args.update({"room_name": argstring})
   # APIの仕様ではrate_limitに数値を渡せば入室時にレートをチェック
   # することもできるが、現在の運用は紳士協定のようなので省略してNoneとする
   args.update({"rate_limit": None})
-  args.update({"ip_addr": gethostbyname(args["hostname"])})
+  try:
+    args.update({"ip_addr": gethostbyname(args["hostname"])})
+  except socket.gaierror:
+    args.update({"ip_addr": None})
   res = loads(rpc.make_room(dumps(args)))
   if res[0]:
     params = res[1]
-    msg = paint_blue(mk_room_str(params))
-    msg = msg + mk_join_str(params)
-  return "".join([mkmsg("NOTICE", args, m) for m in msg.split("\n")])
+    msgs = []
+    msgs.append(mkmsg("NOTICE", args, paint_blue(mk_room_str(params)) + mk_join_str(params)))
+    if params.has_key("session_diff"):
+      msgs += [mkmsg("NOTICE", args, u) for u in mk_session_diff_strs(params)]
+    return "".join(msgs)
+  else:
+    return mkmsg("NOTICE", args, msg)
 
 def join_room(args, argstring):
   msg = u"%(caller)sさんは部屋に入れませんでした。部屋番号は合っていますか？もう入っていませんか？使い方: の＠部屋番号" % args
@@ -250,14 +270,16 @@ def join_room(args, argstring):
   res = loads(rpc.join_room(dumps(args)))
   if res[0]:
     params = res[1]
-    msg = paint_blue(mk_room_str(params))
-    msg = msg + mk_join_str(params)
+    msgs = []
+    msgs.append(mkmsg("NOTICE", args, paint_blue(mk_room_str(params)) + mk_join_str(params)))
     if params["umari_at"]:
-      base = [mkmsg("NOTICE", args, msg)]
-      base += [mkmsg("NOTICE", args, u) for u in mk_umari_strs(params)]
-      base.append(mkmsg("PRIVMSG", args, mk_team_str(params)))
-      return "".join(base)
-  return mkmsg("NOTICE", args, msg)
+      msgs += [mkmsg("NOTICE", args, u) for u in mk_umari_strs(params)]
+      msgs.append(mkmsg("PRIVMSG", args, mk_team_str(params)))
+    if params.has_key("session_diff"):
+      msgs += [mkmsg("NOTICE", args, u) for u in mk_session_diff_strs(params)]
+    return "".join(msgs)
+  else:
+    return mkmsg("NOTICE", args, msg)
 
 def umari_force(args, argstring):
   msg = u"埋められませんでした。部屋に2人以上いて、ホストなら埋められます。"

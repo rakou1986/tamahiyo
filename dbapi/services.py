@@ -374,12 +374,44 @@ class TamahiyoHelper(object):
     return abs(change_width)
 
   def _save_session(self, hostname, user):
+    """make_room(新規ゲーム), join_room(参加表明)のとき、会員のFQDNとIPアドレスを記録する。"""
     try:
       ipaddr = unicode(socket.gethostbyname(hostname))
     except socket.gaierror: # DNSが引けないとかネット切断とか
       ipaddr = None
     db_session.add(Session(int(time.time()), hostname, ipaddr, user.id))
     db_session.flush()
+
+  def _diff_session(self, user):
+    """
+    make_room(新規ゲーム), join_room(参加表明)のとき、会員のFQDNとIPアドレスが
+    前回の記録から変わっているかどうか調べて、
+    変わっている場合には何から何に変わったのかを返す。
+    """
+    diff = {}
+    diff_ = False
+    sessions = db_session.query(Session
+      ).filter(Session.user_id == user.id
+      ).order_by(Session.id.desc()
+      ).limit(2
+      ).all()
+    if len(sessions) == 2:
+      last, prev = sessions
+      if (not None in [last.ipaddr, prev.ipaddr]) and (last.ipaddr != prev.ipaddr):
+        diff_ = True
+      if last.hostname != prev.hostname:
+        diff_ = True
+    if diff_:
+      diff.update({
+        "username": user.name,
+        "last_ipaddr": last.ipaddr,
+        "last_hostname": last.hostname,
+        "last_timestamp": last.timestamp,
+        "prev_ipaddr": prev.ipaddr,
+        "prev_hostname": prev.hostname,
+        "prev_timestamp": prev.timestamp,
+      })
+    return diff
 
   def _get_std_score(self, user, rates):
     """
@@ -459,7 +491,6 @@ class TamahiyoCoreService(TamahiyoHelper):
     except IntegrityError:
       db_session.rollback()
       return dumps((False,))
-    self._save_session(args["hostname"], user)
     db_session.commit()
     return dumps((True,))
 
@@ -513,7 +544,11 @@ class TamahiyoCoreService(TamahiyoHelper):
       self._join_to_room(user, gr)
     self._save_session(args["hostname"], user)
     db_session.commit()
-    return dumps((True, self._construct_room_info(gr, user)))
+    params = self._construct_room_info(gr, user)
+    session_diff = self._diff_session(user)
+    if session_diff:
+      params.update({"session_diff": session_diff})
+    return dumps((True, params))
 
   def join_room(self, json):
     """入室。参加者は8人まで。 8人になると自動でチーム分けされる。"""
@@ -549,7 +584,11 @@ class TamahiyoCoreService(TamahiyoHelper):
       print [gr.umari_at, gr.rating_match]
     self._save_session(args["hostname"], user)
     db_session.commit()
-    return dumps((True, self._construct_room_info(gr, user)))
+    params = self._construct_room_info(gr, user)
+    session_diff = self._diff_session(user)
+    if session_diff:
+      params.update({"session_diff": session_diff})
+    return dumps((True, params))
 
   def umari_force(self, json):
     """参加者が8人未満のとき募集を締め切ってゲームを開始する。ノーレート戦になる"""
