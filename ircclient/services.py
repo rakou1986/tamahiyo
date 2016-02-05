@@ -91,6 +91,8 @@ def parsemsg(msg):
 
 def mkmsg(command, args, msg):
   return "%s %s :%s\r\n" % (command, args["channel"].encode(conf.ENCODING), msg.encode(conf.ENCODING))
+  # 実地テストの時はこちらを使用
+  # return "%s %s :%s\r\n" % (command, u"#たまひよ開発".encode(conf.ENCODING), msg.encode(conf.ENCODING))
 
 def add_user(args, argstring):
   msg = u"登録できませんでした。使い方: 新規会員＠名前＠初期レート"
