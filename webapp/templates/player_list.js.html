@@ -10,10 +10,32 @@
 <link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='fixedHeader.dataTables.min.css')}}">
 
 <script>
+  // レートのフィルター
+  $.fn.dataTable.ext.search.push(
+    function(settings, data, dataIndex){
+      var rate_min = parseInt( $('#rate_min').val(), 10 );
+      var rate_max = parseInt( $('#rate_max').val(), 10 );
+      var rate = parseFloat( data[1] ) || 0; // 「レート」列の値
+      if ( ( isNaN( rate_min ) && isNaN( rate_max ) ) ||
+        ( isNaN( rate_min ) && rate <= rate_max ) ||
+        ( rate_min <= rate   && isNaN( rate_max ) ) ||
+        ( rate_min <= rate   && rate <= rate_max ) ) {
+        return true;
+        }
+      return false;
+    }); 
+
+
+  // DataTableオブジェクトの構築
   $(document).ready(function(){
     var table = $("#player_list").DataTable({
       paging: false,
       fixedHeader: true
     });
+
+    // テキストボックスの更新に対応するイベントハンドラ
+    $('#rate_min, #rate_max').keyup( function() {
+      table.draw();
+      });
   });
 </script>
