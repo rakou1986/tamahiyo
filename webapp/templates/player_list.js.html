@@ -52,11 +52,29 @@
       });
 
 
-  // DataTableオブジェクトの構築
   $(document).ready(function(){
+
+    // 連勝・連敗数にテキストをつける。負の値が連敗
+    $(".streak").each(function(){
+      var streak_ = parseInt(this.textContent, 10);
+      if (streak_ < -1) {
+        this.textContent = Math.abs(streak_).toString() + "連敗";
+        this.classList.add("streak_negative");
+        }
+      else if (1 < streak_) {
+        this.textContent = streak_.toString() + "連勝";
+        this.classList.add("streak_positive");
+        }
+      else {
+        this.textContent = "";
+        }
+      });
+
+
+    // DataTableオブジェクトの構築
     var table = $("#player_list").DataTable({
       paging: false,
-      fixedHeader: true,
+      fixedHeader: true, // 表をスクロールしてもヘッダーを画面内に留める
 
       // 標準の検索ボックスを非表示として、代わりにinfoを表示
       "sDom": "<'top'i>rt<'clear'>",
@@ -65,7 +83,6 @@
         "info": "_START_-_END_件目を表示（全_MAX_件） ",
         "infoFiltered": "",
         },
-
 
       // 表の行数を表示
       "columnDefs": [{
@@ -77,6 +94,7 @@
 
     });
 
+
     // 表の行数を表示
     table.on("order.dt search.dt", function () {
       table.column(0, {search:"applied", order:"applied"}).nodes().each( function (cell, i) {
@@ -84,9 +102,11 @@
         });
       }).draw();
 
+
     // テキストボックスの更新に対応するイベントハンドラ
     $("#rate_min, #rate_max, #days_within, #games_min, #games_max").keyup(function(){
       table.draw();
       });
+
   });
 </script>
