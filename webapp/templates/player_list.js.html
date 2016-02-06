@@ -13,17 +13,18 @@
   // レートのフィルター
   $.fn.dataTable.ext.search.push(
     function(settings, data, dataIndex){
-      var rate_min = parseInt( $('#rate_min').val(), 10 );
-      var rate_max = parseInt( $('#rate_max').val(), 10 );
-      var rate = parseFloat( data[1] ) || 0; // 「レート」列の値
-      if ( ( isNaN( rate_min ) && isNaN( rate_max ) ) ||
-        ( isNaN( rate_min ) && rate <= rate_max ) ||
-        ( rate_min <= rate   && isNaN( rate_max ) ) ||
-        ( rate_min <= rate   && rate <= rate_max ) ) {
+      var rate_min = parseInt($("#rate_min").val(), 10);
+      var rate_max = parseInt($("#rate_max").val(), 10);
+      var rate = parseInt(data[1]) || 0; // 「レート」列の値
+      if (
+        (isNaN(rate_min) && isNaN(rate_max)) ||
+        (isNaN(rate_min) && rate <= rate_max) ||
+        (rate_min <= rate && isNaN(rate_max)) ||
+        (rate_min <= rate && rate <= rate_max)){
         return true;
         }
       return false;
-    }); 
+    });
 
 
   // DataTableオブジェクトの構築
@@ -33,7 +34,7 @@
       fixedHeader: true,
 
       // 標準の検索ボックスを非表示として、代わりにinfoを表示
-      "sDom": '<"top"i>rt<"bottom"flp><"clear">',  
+      "sDom": "<'top'i>rt<'bottom'flp><'clear'>",  
       "language": {
         "infoEmpty": "該当無し",
         "info": "_START_-_END_件目を表示（全_MAX_件） ",
@@ -43,7 +44,7 @@
     });
 
     // テキストボックスの更新に対応するイベントハンドラ
-    $('#rate_min, #rate_max').keyup( function() {
+    $("#rate_min, #rate_max").keyup(function(){
       table.draw();
       });
   });
