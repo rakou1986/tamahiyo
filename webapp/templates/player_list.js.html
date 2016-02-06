@@ -9,6 +9,10 @@
 <script type="text/javascript" charset="utf8" src="{{ url_for('static', filename='fixedHeader.dataTables.min.js')}}"></script>
 <link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='fixedHeader.dataTables.min.css')}}">
 
+{# このページのスタイル #}
+<link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='player_list.css')}}">
+
+
 <script>
   // フィルター
   $.fn.dataTable.ext.search.push(
@@ -90,7 +94,9 @@
         "orderable": false,
         "targets": 0
         }],
-      "order": [[1,'asc']],
+
+      // 標準の並び順をレート高い順にする
+      "order": [[1,'desc']],
 
     });
 

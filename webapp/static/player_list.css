@@ -1,0 +1,12 @@
+.won {
+  color: #00bfff;
+  }
+.lost {
+  color: #ff4500;
+  }
+.streak_positive {
+  color: #00ffff;
+  }
+.streak_negative {
+  color: #ff1493;
+  }
