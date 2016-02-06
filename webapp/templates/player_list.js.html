@@ -10,7 +10,7 @@
 <link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='fixedHeader.dataTables.min.css')}}">
 
 <script>
-  // レートのフィルター
+  // フィルター
   $.fn.dataTable.ext.search.push(
     function(settings, data, dataIndex){
       // レートがn以上m以下
@@ -28,17 +28,28 @@
         active = true; // 入力がない場合は絞り込まない
       }
 
+      // 参戦数がn以上m以下
+      var games_min = parseInt($("#games_min").val(), 10);
+      var games_max = parseInt($("#games_max").val(), 10);
+      var games = parseInt(data[4]) || 0; // 「参戦数」列の値
+
       if (
-          active &&
-          (isNaN(rate_min) && isNaN(rate_max)) ||
-          (isNaN(rate_min) && rate <= rate_max) ||
-          (rate_min <= rate && isNaN(rate_max)) ||
-          (rate_min <= rate && rate <= rate_max)
+          active && (
+            (isNaN(rate_min) && isNaN(rate_max)) ||
+            (isNaN(rate_min) && rate <= rate_max) ||
+            (rate_min <= rate && isNaN(rate_max)) ||
+            (rate_min <= rate && rate <= rate_max)
+          ) && (
+            (isNaN(games_min) && isNaN(games_max)) ||
+            (isNaN(games_min) && games <= games_max) ||
+            (games_min <= games && isNaN(games_max)) ||
+            (games_min <= games && games <= games_max)
+          )
         ){
-        return true;
+        return true;  // 表示
         }
-      return false;
-    });
+      return false; // 非表示
+      });
 
 
   // DataTableオブジェクトの構築
@@ -58,7 +69,7 @@
     });
 
     // テキストボックスの更新に対応するイベントハンドラ
-    $("#rate_min, #rate_max, #days_within").keyup(function(){
+    $("#rate_min, #rate_max, #days_within, #games_min, #games_max").keyup(function(){
       table.draw();
       });
   });
