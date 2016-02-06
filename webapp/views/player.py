@@ -2,10 +2,12 @@
 #coding: utf-8
 
 from flask import render_template, Blueprint
-import jinja2
+
+import services # webapp/services.py
 
 bp = Blueprint("player", __name__) # 第一引数はurl_for用
 
 @bp.route("/list/")
 def list():
-  return render_template("list.html")
+  players = services.get_all_players()
+  return render_template("list.html", players=players)

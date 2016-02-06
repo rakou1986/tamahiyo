@@ -65,6 +65,7 @@ class User(Base):
   enable = Column(Boolean, nullable=False)
   won_count = Column(Integer, nullable=False)
   lost_count = Column(Integer, nullable=False)
+  streak = Column(Integer) # 連勝記録
   
   def __init__(self, name, rate):
     self.name = name

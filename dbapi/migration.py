@@ -2,6 +2,7 @@
 # coding: utf-8
 
 from models import *
+from services import TamahiyoCoreService
 import json
 
 """
@@ -10,6 +11,8 @@ http://tamahiyo.netgamers.jp/cgi-bin/kokko/glog.cgi
 
 "全ての戦跡"のコピペを、tamahiyo_data.txtとする。
 """
+
+tama = TamahiyoCoreService()
 
 def main():
   lines = open("tamahiyo_data.txt").readlines()
@@ -71,6 +74,10 @@ def main():
         pr.user.lost_count += 1
       pr.user.rate = pr.determined_rate
       db_session.flush()
+  db_session.commit()
+
+  for user in db_session.query(User).all():
+    user.streak = tama._get_streak(user)
   db_session.commit()
 
 if __name__ == "__main__":

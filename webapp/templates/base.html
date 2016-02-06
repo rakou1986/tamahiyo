@@ -1,1 +1,11 @@
-Hello world
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title>{% block title %}{% endblock %}</title>
+  <link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='style.css')}}">
+</head>
+<body>
+{% block body %}{% endblock %}
+</body>
+</html>

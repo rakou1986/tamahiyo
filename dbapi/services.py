@@ -349,8 +349,13 @@ class TamahiyoHelper(object):
         cw = pr.change_width = self._calc_change_width(pr)
         pr.user.rate = pr.user.rate + (cw if pr.won else -cw)
         pr.determined_rate = pr.rate_at_umari + (cw if pr.won else -cw)
-
     db_session.flush()
+
+    # 連勝記録の更新
+    for pr in members:
+      pr.user.streak = self._get_streak(pr.user)
+    db_session.flush()
+
 
   def _calc_change_width(self, pr):
     """
@@ -436,6 +441,30 @@ class TamahiyoHelper(object):
     IRCの事情に配慮して、プレイヤー名の末尾にはアンダースコアを使えない仕様にした。
     """
     return s.rstrip("_")
+
+  def _get_streak(self, user):
+    """連勝連敗数"""
+    cursor = 0
+    streak = 0
+    while True:
+      q = db_session.query(PersonalRecord
+        ).filter(PersonalRecord.user_id==user.id
+        ).filter(PersonalRecord.won!=None
+        ).order_by(PersonalRecord.id.desc())
+      try:
+        pr = q.slice(cursor, cursor+1).one()
+      except NoResultFound:
+        break
+      cursor += 1
+      if streak == 0:
+        streak += 1 if pr.won else -1
+      elif (streak < 0) and (not pr.won):
+        streak -= 1
+      elif (0 < streak) and (pr.won):
+        streak += 1
+      else:
+        break
+    return streak
 
 
 class TamahiyoCoreService(TamahiyoHelper):
@@ -1016,3 +1045,22 @@ class TamahiyoCoreService(TamahiyoHelper):
     if not users:
       return dumps((False,))
     return dumps((True, [user.name for user in users]))
+
+  def get_all_players(self):
+    """凍結されていない全プレイヤー。webapp用"""
+    users = []
+    users_ = db_session.query(User).filter(User.enable==True).order_by(User.rate.desc()).all()
+    for user in users_:
+      games = user.won_count + user.lost_count
+      users.append({
+        "rank": users_.index(user) + 1,
+        "rate": user.rate,
+        "rate_diff_30": user.rate - loads(user.rate_prev_30days)[-1],
+        "name": user.name,
+        "games": games,
+        "won": user.won_count,
+        "lost": user.lost_count,
+        "won_freq": u"%0.2f" % (user.won_count / float(games) * 100),
+        "streak": user.streak,
+      })
+    return dumps(users)
