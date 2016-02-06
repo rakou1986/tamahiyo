@@ -30,7 +30,16 @@
   $(document).ready(function(){
     var table = $("#player_list").DataTable({
       paging: false,
-      fixedHeader: true
+      fixedHeader: true,
+
+      // 標準の検索ボックスを非表示として、代わりにinfoを表示
+      "sDom": '<"top"i>rt<"bottom"flp><"clear">',  
+      "language": {
+        "infoEmpty": "該当無し",
+        "info": "_START_-_END_件目を表示（全_MAX_件） ",
+        "infoFiltered": "",
+        },
+
     });
 
     // テキストボックスの更新に対応するイベントハンドラ
