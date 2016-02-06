@@ -14,6 +14,8 @@
       <td>以上</td>
       <td><input id="rate_max" name="rate_max" type="text"></td>
       <td>以下</td>
+      <td><input id="days_within" name="days_within" type="text" value="60"></td>
+      <td>日以内に参戦した</td>
     </tr>
   </tbody>
 </table>
@@ -29,7 +31,7 @@
       <th>敗</th>
       <th>勝率</th>
       <th>連勝</th>
-      <th>最終更新</th>
+      <th style="display:none;">最終参戦</th>
     </tr>
   </thead>
   <tbody>
@@ -44,7 +46,7 @@
       <td>{{ player.lost }}</td>
       <td>{{ player.won_freq }}</td>
       <td>{{ player.streak }}</td>
-      <td>{{ player.last_game_timestamp }}</td>
+      <td style="display:none;">{{ player.last_game_timestamp }}</td>
     </tr>
     {% endfor %}
   </tbody>

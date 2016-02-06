@@ -13,14 +13,28 @@
   // レートのフィルター
   $.fn.dataTable.ext.search.push(
     function(settings, data, dataIndex){
+      // レートがn以上m以下
       var rate_min = parseInt($("#rate_min").val(), 10);
       var rate_max = parseInt($("#rate_max").val(), 10);
       var rate = parseInt(data[1]) || 0; // 「レート」列の値
+
+      // n日以内に参戦した
+      var seconds_within = parseInt($("#days_within").val(), 10) * 24 * 60 * 60;
+      var now = Math.floor($.now() / 1000);  // タイムスタンプ(ミリ秒) / 1000
+      var last_game_timestamp = parseInt(data[9]) || 0; // 「最終更新」列の値
+      var elapsed = now - last_game_timestamp;
+      var active = elapsed <= seconds_within;  //どちらかがNaNの場合もfalse
+      if (isNaN(elapsed) || isNaN(seconds_within)) {
+        active = true; // 入力がない場合は絞り込まない
+      }
+
       if (
-        (isNaN(rate_min) && isNaN(rate_max)) ||
-        (isNaN(rate_min) && rate <= rate_max) ||
-        (rate_min <= rate && isNaN(rate_max)) ||
-        (rate_min <= rate && rate <= rate_max)){
+          active &&
+          (isNaN(rate_min) && isNaN(rate_max)) ||
+          (isNaN(rate_min) && rate <= rate_max) ||
+          (rate_min <= rate && isNaN(rate_max)) ||
+          (rate_min <= rate && rate <= rate_max)
+        ){
         return true;
         }
       return false;
@@ -44,7 +58,7 @@
     });
 
     // テキストボックスの更新に対応するイベントハンドラ
-    $("#rate_min, #rate_max").keyup(function(){
+    $("#rate_min, #rate_max, #days_within").keyup(function(){
       table.draw();
       });
   });
