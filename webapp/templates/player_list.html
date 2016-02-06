@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}プレイヤーリスト{% endblock %}
+
+{% block scripts %}
+{% include "player_list.js.html" %}
+{% endblock %}
+
+{% block body %}
+<table class="display" id="player_list">
+  <thead>
+    <tr>
+      <th>順位</th>
+      <th>レート</th>
+      <th>先月比</th>
+      <th>名前</th>
+      <th>参戦数</th>
+      <th>勝</th>
+      <th>敗</th>
+      <th>勝率</th>
+      <th>連勝</th>
+      <th>最終更新</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for player in players %}
+    <tr>
+      <td>{{ player.rank }}</td>
+      <td>{{ player.rate }}</td>
+      <td>{{ player.rate_diff_30 }}</td>
+      <td>{{ player.name }}</td>
+      <td>{{ player.games }}</td>
+      <td>{{ player.won }}</td>
+      <td>{{ player.lost }}</td>
+      <td>{{ player.won_freq }}</td>
+      <td>{{ player.streak }}</td>
+      <td>{{ player.last_game_timestamp }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

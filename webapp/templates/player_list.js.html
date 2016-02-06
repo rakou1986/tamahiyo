@@ -1,0 +1,11 @@
+{#  DataTables推奨バージョンのjQuery-1.11.3 #}
+<script type="text/javascript" charset="utf8" src="{{ url_for('static', filename='jquery-1.11.3.min.js')}}"></script>
+{# DataTablesのインストール（jsとcss） #}
+<script type="text/javascript" charset="utf8" src="{{ url_for('static', filename='jquery.dataTables.min.js')}}"></script>
+<link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='jquery.dataTables.min.css')}}">
+
+<script>
+  $(document).ready(function(){
+    $("#player_list").DataTable();
+  });
+</script>

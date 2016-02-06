@@ -10,4 +10,4 @@ bp = Blueprint("player", __name__) # 第一引数はurl_for用
 @bp.route("/list/")
 def list():
   players = services.get_all_players()
-  return render_template("list.html", players=players)
+  return render_template("player_list.html", players=players)
