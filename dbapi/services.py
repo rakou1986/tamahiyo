@@ -349,6 +349,7 @@ class TamahiyoHelper(object):
         cw = pr.change_width = self._calc_change_width(pr)
         pr.user.rate = pr.user.rate + (cw if pr.won else -cw)
         pr.determined_rate = pr.rate_at_umari + (cw if pr.won else -cw)
+      pr.user.last_game_timestamp = int(time.time())
     db_session.flush()
 
     # 連勝記録の更新
@@ -1062,5 +1063,6 @@ class TamahiyoCoreService(TamahiyoHelper):
         "lost": user.lost_count,
         "won_freq": u"%0.2f" % (user.won_count / float(games) * 100),
         "streak": user.streak,
+        "last_game_timestamp": user.last_game_timestamp,
       })
     return dumps(users)

@@ -4,6 +4,7 @@
 from models import *
 from services import TamahiyoCoreService
 import json
+import time
 
 """
 たまひよのゲーム記録がここにある
@@ -78,6 +79,7 @@ def main():
 
   for user in db_session.query(User).all():
     user.streak = tama._get_streak(user)
+    user.last_game_timestamp = int(time.time())
   db_session.commit()
 
 if __name__ == "__main__":

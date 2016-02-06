@@ -14,6 +14,7 @@
       <th>敗</th>
       <th>勝率</th>
       <th>連勝</th>
+      <th>最終更新</th>
     </tr>
     {% for player in players %}
     <tr>
@@ -26,6 +27,7 @@
       <td>{{ player.lost }}</p>
       <td>{{ player.won_freq }}</p>
       <td>{{ player.streak }}</p>
+      <td>{{ player.last_game_timestamp }}</p>
     </tr>
     {% endfor %}
   </tbody>
