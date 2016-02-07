@@ -1054,7 +1054,6 @@ class TamahiyoCoreService(TamahiyoHelper):
     for user in users_:
       games = user.won_count + user.lost_count
       users.append({
-        "rank": users_.index(user) + 1,
         "rate": user.rate,
         "rate_diff_30": user.rate - loads(user.rate_prev_30days)[-1],
         "name": user.name,
