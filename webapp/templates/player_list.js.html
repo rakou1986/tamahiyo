@@ -55,6 +55,8 @@
       return false; {# 非表示 #}
       });
 
+  var debug = {};
+
   $(document).ready(function(){
     {# 連勝・連敗数にテキストをつける。負の値が連敗 #}
     $(".streak").each(function(){
@@ -109,11 +111,48 @@
       $.when(table.draw()).done(update_std_score(table));
       });
 
+    {# 日数指定ボタンのイベントハンドラ #}
+    $(".days").click(function(){
+      $.when(
+        $(".days").each(function(){
+          this.classList.remove("button_press");
+          })
+      ).done(
+        this.classList.add("button_press")
+        );
+      var value = NaN;
+      if (this.value == "全期間"){
+        value = "";
+        }
+      else {
+        value = this.value;
+        }
+      $("#days_within").val(value).trigger("keyup");
+      });
+
+    init_days_button();
     update_std_score(table);
 
   });
 
 
+  {# どのボタンが押されているのか分かるように着色 #}
+  function init_days_button(){
+    var val = $("#days_within").val();
+    if (val == ""){
+      $(".days[value='全期間']")[0].classList.add("button_press");
+      }
+    else {
+      $(".days").each(function(){
+        if (this.value == val){
+          this.classList.add("button_press");
+          }
+        });
+      }
+    }
+
+
+  {# フィルターで絞り込み後に偏差値を再計算 #}
   function update_std_score(table){
     var rows = table.$("tr", {"filter": "applied"}); {# フィルター後の各行 #}
     var rates = [];
@@ -127,6 +166,7 @@
       });
     }
 
+  {# 偏差値 #}
   function get_std_score(rate, rates){
     var n = rates.length;
     if (n == 1){

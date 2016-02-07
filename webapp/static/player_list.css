@@ -1,12 +1,15 @@
 .won {
-  color: #00bfff;
+  color: #00bfff; /* deep skyblue */
   }
 .lost {
-  color: #ff4500;
+  color: #ff4500; /* orange red */
   }
 .streak_positive {
   color: #00ffff;
   }
 .streak_negative {
   color: #ff1493;
+  }
+.button_press {
+  background-color: #deb887; /* burly wood */
   }

@@ -14,8 +14,6 @@
       <td>以上</td>
       <td><input id="rate_max" name="rate_max" type="text"></td>
       <td>以下</td>
-      <td><input id="days_within" name="days_within" type="text" value="60"></td>
-      <td>日以内に参戦した</td>
     </tr>
     <tr>
       <td>参戦数</td>
@@ -23,6 +21,22 @@
       <td>以上</td>
       <td><input id="games_max" name="games_max" type="text"></td>
       <td>以下</td>
+    </tr>
+  </tbody>
+</table>
+<table>
+  <tbody>
+    <tr>
+      <td>
+        参戦
+        <input class="days" name="days" type="button" value="全期間">
+        または
+        <input class="days" name="days" type="button" value="7">
+        <input class="days" name="days" type="button" value="30">
+        <input class="days" name="days" type="button" value="60">
+        日以内
+      </td>
+      <td><input id="days_within" name="days_within" type="hidden"></td>
     </tr>
   </tbody>
 </table>
