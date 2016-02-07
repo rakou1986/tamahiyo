@@ -25,7 +25,7 @@
       {# n日以内に参戦した #}
       var seconds_within = parseInt($("#days_within").val(), 10) * 24 * 60 * 60;
       var now = Math.floor($.now() / 1000);  {# タイムスタンプ(ミリ秒) / 1000 #}
-      var last_game_timestamp = parseInt(data[9]) || 0; {# 「最終更新」列の値 #}
+      var last_game_timestamp = parseInt(data[10]) || 0; {# 「最終参戦」列の値 #}
       var elapsed = now - last_game_timestamp;
       var active = elapsed <= seconds_within;  {#どちらかがNaNの場合もfalse #}
       if (isNaN(elapsed) || isNaN(seconds_within)) {
@@ -55,9 +55,7 @@
       return false; {# 非表示 #}
       });
 
-
   $(document).ready(function(){
-
     {# 連勝・連敗数にテキストをつける。負の値が連敗 #}
     $(".streak").each(function(){
       var streak_ = parseInt(this.textContent, 10);
@@ -73,7 +71,6 @@
         this.textContent = "";
         }
       });
-
 
     {# DataTableオブジェクトの構築 #}
     var table = $("#player_list").DataTable({
@@ -97,9 +94,7 @@
 
       {# 標準の並び順をレート高い順にする #}
       "order": [[1,'desc']],
-
     });
-
 
     {# 表の行数を表示 #}
     table.on("order.dt search.dt", function () {
@@ -108,11 +103,73 @@
         });
       }).draw();
 
-
     {# テキストボックスの更新に対応するイベントハンドラ #}
     $("#rate_min, #rate_max, #days_within, #games_min, #games_max").keyup(function(){
-      table.draw();
+      {# フィルターを適用したら、偏差値を再計算する #}
+      $.when(table.draw()).done(update_std_score(table));
       });
 
+    update_std_score(table);
+
   });
+
+
+  function update_std_score(table){
+    var rows = table.$("tr", {"filter": "applied"}); {# フィルター後の各行 #}
+    var rates = [];
+    rows.each(function(){
+      rates.push(parseInt(this.getElementsByClassName("rate")[0].textContent, 10));
+      });
+    rows.each(function(){
+      rate = parseInt(this.getElementsByClassName("rate")[0].textContent, 10);
+      this.getElementsByClassName("std_score"
+          )[0].textContent = get_std_score(rate, rates);
+      });
+    }
+
+  function get_std_score(rate, rates){
+    var n = rates.length;
+    if (n == 1){
+      return 0;
+      }
+    var sum = rates.reduce(function(a, b){  {# python: sum(rates) #}
+      return a + b;
+      });
+    var avg = sum / n;
+    {# python: sigma_x = math.sqrt(sum([(rate - avg)**2 for rate in rates]) / float(n)) #}
+    var sigma_x = Math.sqrt(
+      {# python: list_ = [(rate - avg)**2 for rate in rates] #}
+      rates.map(function(rate_){
+        return Math.pow((rate_ - avg), 2);
+        }
+      {# python: sum(list_) #}
+      ).reduce(function(a, b){
+        return a + b;
+        }
+      ) / n);
+    var std_score = (((rate - avg) * 10) / sigma_x) + 50;
+    return padding(round_(std_score, 3), 2);
+    }
+
+  function round_(float_, n){
+    {# 小数第n位で四捨五入 #}
+    var m = Math.pow(10, n-1);
+    return Math.round(float_ * m) / m;
+    }
+
+  function padding(float_, n){
+    {# 小数第n位まで0でパディング #}
+    var s = float_.toString();
+    if (s.contains(".")) {
+      var l = s.split(".")[1].length;
+      if (l < n) {
+        s += "0".repeat(n - l);
+        }
+      }
+    else {
+      s += "." + "0".repeat(n);
+      }
+    return s;
+    }
+
 </script>

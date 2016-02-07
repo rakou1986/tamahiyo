@@ -37,6 +37,7 @@
       <th>勝</th>
       <th>敗</th>
       <th>勝率</th>
+      <th>偏差値</th>
       <th>連勝</th>
       <th style="display:none;">最終参戦</th>
     </tr>
@@ -45,13 +46,14 @@
     {% for player in players %}
     <tr>
       <td></td>
-      <td>{{ player.rate }}</td>
+      <td class="rate">{{ player.rate }}</td>
       <td>{{ player.rate_diff_30 }}</td>
       <td>{{ player.name }}</td>
       <td>{{ player.games }}</td>
       <td class="won">{{ player.won }}</td>
       <td class="lost">{{ player.lost }}</td>
       <td>{{ player.won_freq }}</td>
+      <td class="std_score"></td>
       <td class="streak">{{ player.streak }}</td>
       <td style="display:none;">{{ player.last_game_timestamp }}</td>
     </tr>
