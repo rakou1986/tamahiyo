@@ -36,6 +36,8 @@ def main():
   db_session.commit()
 
   len_ = len(lines[1:])
+  now = int(time.time())
+  _2_hour = 60 * 60 * 2
   for i, line in enumerate(lines[1:]):
     percent = int((i / float(len_)) * 100)
     print "match %d processing... %d%%" % (i+1, percent)
@@ -49,8 +51,10 @@ def main():
     winner_change = int(columns[9])
     loser_change = int(columns[10])
 
-    tmptime = 946652400 # 仮に2000/01/01 00:00:00とする
-    gr = GeneralRecord(tmptime, u"#こっこたまひよ", 0, u"someone")
+    timestamp = 946652400 # 仮に2000/01/01 00:00:00とする
+    if len_ - i <= 720:
+      timestamp = now - (_2_hour * (len_ - i))
+    gr = GeneralRecord(timestamp, u"#こっこたまひよ", 0, u"someone")
     gr.active = False
     db_session.add(gr)
     db_session.flush()
@@ -74,9 +78,15 @@ def main():
         pr.determined_rate = pr.rate_at_umari - loser_change
         pr.user.lost_count += 1
       pr.user.rate = pr.determined_rate
+      # 表が不自然にならないような暫定の情報を付加
+      # 一日12戦として、最後の60日分（720戦）があればよさそう
+      if len_ - i <= 720:
+        pr.user.last_game_timestamp = timestamp
+        pr.user.result_last_60_days = tama._construct_result_last_60_days(pr.user, pr.won)
       db_session.flush()
   db_session.commit()
 
+  # 連勝のやつ
   for user in db_session.query(User).all():
     user.streak = tama._get_streak(user)
     user.last_game_timestamp = int(time.time())

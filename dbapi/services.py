@@ -300,6 +300,21 @@ class TamahiyoHelper(object):
       "caller": caller,
       }
 
+  def _construct_result_last_60_days(self, user, won):
+    """
+    60日以内の勝敗情報。
+    60日以上前の記録は必要ないので消す。
+    表示される時には60日よりも古い記録が残っていることになるだろうが、
+    表示時の現在時刻でフィルターできるので、残っていてよい。
+    """
+    d = loads(user.result_last_60_days)
+    now = time.time()
+    for key in d.keys():
+      if conf._60_DAYS < now - int(key):
+        d.pop(key)
+    d.update({user.last_game_timestamp: won})
+    return dumps(d)
+
   def _get_owner_pr(self, general_record):
     for pr in general_record.personal_records:
       if pr.user.name == general_record.room_owner:
@@ -353,10 +368,11 @@ class TamahiyoHelper(object):
     db_session.flush()
 
     # 連勝記録の更新
+    # 60日以内の勝敗記録
     for pr in members:
       pr.user.streak = self._get_streak(pr.user)
+      pr.user.result_last_60_days = self._construct_result_last_60_days(pr.user, pr.won)
     db_session.flush()
-
 
   def _calc_change_width(self, pr):
     """
@@ -1063,5 +1079,6 @@ class TamahiyoCoreService(TamahiyoHelper):
         "won_freq": u"%0.2f" % (user.won_count / float(games) * 100),
         "streak": user.streak,
         "last_game_timestamp": user.last_game_timestamp,
+        "result_last_60_days": user.result_last_60_days,
       })
     return dumps(users)

@@ -52,6 +52,7 @@ class GeneralRecord(Base):
     self.room_owner = room_owner
     self.room_number = room_number
 
+
 class User(Base):
   """会員情報"""
   __tablename__ = "users"
@@ -67,7 +68,8 @@ class User(Base):
   lost_count = Column(Integer, nullable=False)
   streak = Column(Integer) # 連勝記録
   last_game_timestamp = Column(Integer)
-  
+  result_last_60_days = Column(String) # {timestamp: 勝(True) | 敗(False)} という辞書
+
   def __init__(self, name, rate):
     self.name = name
     self.rate = rate
@@ -77,6 +79,8 @@ class User(Base):
     self.enable = True
     self.won_count = 0
     self.lost_count = 0
+    self.result_last_60_days = "{}"
+
 
 class UserAlias(Base):
   """iam＠の機能で設定できる会員の別名"""
@@ -92,6 +96,7 @@ class UserAlias(Base):
   def __init__(self, name, user_id):
     self.name = name
     self.user_id = user_id
+
 
 class Session(Base):
   """会員の接続状況を記録する"""
@@ -143,6 +148,7 @@ class PersonalRecord(Base):
     self.kicked = False
     self.user_id = user_id
     self.general_record_id = general_record_id
+
 
 class RoomNumberPool(Base):
   """部屋番号の振り出し管理
