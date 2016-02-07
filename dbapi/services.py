@@ -1069,6 +1069,10 @@ class TamahiyoCoreService(TamahiyoHelper):
     users_ = db_session.query(User).filter(User.enable==True).order_by(User.rate.desc()).all()
     for user in users_:
       games = user.won_count + user.lost_count
+      try:
+        won_freq = u"%0.2f" % (user.won_count / float(games) * 100)
+      except ZeroDivisionError:
+        won_freq = u"0.00"
       users.append({
         "rate": user.rate,
         "rate_diff_30": user.rate - loads(user.rate_prev_30days)[-1],
@@ -1076,7 +1080,7 @@ class TamahiyoCoreService(TamahiyoHelper):
         "games": games,
         "won": user.won_count,
         "lost": user.lost_count,
-        "won_freq": u"%0.2f" % (user.won_count / float(games) * 100),
+        "won_freq": won_freq,
         "streak": user.streak,
         "last_game_timestamp": user.last_game_timestamp,
         "result_last_60_days": user.result_last_60_days,
