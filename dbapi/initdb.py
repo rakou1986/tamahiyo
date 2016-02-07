@@ -2,11 +2,11 @@
 # coding: utf-8
 
 from models import *
-import migration
 
 def initialize():
   Base.metadata.drop_all(engine)
   Base.metadata.create_all(engine)
+  import migration
   migration.main()
 
 if __name__ == "__main__":
