@@ -15,6 +15,10 @@ def send_image(path):
   """
   return send_from_directory("static/images", path)
 
+@app.route("/favicon.ico")
+def favicon():
+  """IEが/favicon.icoを引きにくるので。"""
+  return send_from_directory("static/images", "favicon.ico", mimetype="image/vnd.microsoft.icon")
 
 if __name__ == "__main__":
     app.debug = True

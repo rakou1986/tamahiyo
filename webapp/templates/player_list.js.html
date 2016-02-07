@@ -163,11 +163,15 @@
     if (0 <= s.indexOf(".")) {
       var l = s.split(".")[1].length;
       if (l < n) {
-        s += "0".repeat(n - l);
+        for (var i = 0; i < (n - l); i++){
+          s += "0";
+          }
         }
       }
     else {
-      s += "." + "0".repeat(n);
+      for (var i = 0; i < n; i++){
+        s += "0";
+        }
       }
     return s;
     }
