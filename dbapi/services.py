@@ -338,6 +338,7 @@ class TamahiyoHelper(object):
       for pr in gr.personal_records:
         if pr.active:
           members.append(pr)
+          pr.user.last_game_timestamp = int(time.time())
     for pr in members:
       pr.won = True if pr.team == gr.winner else False
       pr.active = False
@@ -349,7 +350,6 @@ class TamahiyoHelper(object):
         cw = pr.change_width = self._calc_change_width(pr)
         pr.user.rate = pr.user.rate + (cw if pr.won else -cw)
         pr.determined_rate = pr.rate_at_umari + (cw if pr.won else -cw)
-      pr.user.last_game_timestamp = int(time.time())
     db_session.flush()
 
     # 連勝記録の更新
