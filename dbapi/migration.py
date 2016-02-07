@@ -36,14 +36,15 @@ def main():
   db_session.commit()
 
   len_ = len(lines[1:])
+  #len_ = len(lines[-800:]) # テスト用
   now = int(time.time())
   _2_hour = 60 * 60 * 2
   for i, line in enumerate(lines[1:]):
+  #for i, line in enumerate(lines[-800:]): # テスト用
     percent = int((i / float(len_)) * 100)
     print "match %d processing... %d%%" % (i+1, percent)
-    #テスト回し用
-    #if 5 < i:
-    #  break
+    #if 1000 < i: #テスト用
+    #  break #テスト用
     columns = line.split()
     if len(columns) != 11: # 4v4 以外はとりあえず飛ばす
       continue
@@ -59,13 +60,13 @@ def main():
     db_session.add(gr)
     db_session.flush()
 
-    for i, player in enumerate(players):
+    for ii, player in enumerate(players):
       pr = PersonalRecord(users.index(player)+1, gr.id)
       db_session.add(pr)
       db_session.flush()
       pr.active = False
       pr.rate_at_umari = pr.user.rate
-      if i < 4:
+      if ii < 4:
         pr.won = True
         pr.team = 1
         pr.change_width = winner_change
@@ -83,13 +84,15 @@ def main():
       if len_ - i <= 720:
         pr.user.last_game_timestamp = timestamp
         pr.user.result_last_60_days = tama._construct_result_last_60_days(pr.user, pr.won)
+      else:
+        pr.user.last_game_timestamp = int(time.time())
       db_session.flush()
   db_session.commit()
 
   # 連勝のやつ
-  for user in db_session.query(User).all():
+  for i, user in enumerate(db_session.query(User).all()):
+    print "crating streak %d" % i
     user.streak = tama._get_streak(user)
-    user.last_game_timestamp = int(time.time())
   db_session.commit()
 
 if __name__ == "__main__":
