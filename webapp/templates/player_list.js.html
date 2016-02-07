@@ -160,7 +160,7 @@
   function padding(float_, n){
     {# 小数第n位まで0でパディング #}
     var s = float_.toString();
-    if (s.contains(".")) {
+    if (0 <= s.indexOf(".")) {
       var l = s.split(".")[1].length;
       if (l < n) {
         s += "0".repeat(n - l);
