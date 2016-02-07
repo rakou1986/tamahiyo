@@ -130,6 +130,22 @@
       $("#days_within").val(value).trigger("keyup");
       });
 
+    {# フィルターしない（全部表示） #}
+    $("#view_all").click(function(){
+      $.when(
+        $("#rate_min, #rate_max, #days_within, #games_min, #games_max").val("")
+      ).done(
+        $.when(
+          $(".days").each(function(){
+            this.classList.remove("button_press");
+            })
+        ).done(
+          init_days_button()
+        ),
+        $("#rate_min").trigger("keyup")
+        );
+      });
+
     init_days_button();
     update_std_score(table);
 
