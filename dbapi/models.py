@@ -60,7 +60,7 @@ class User(Base):
   id = Column(Integer, primary_key=True)
   name = Column(Unicode, nullable=False, index=True, unique=True)
   rate = Column(Integer, nullable=False)
-  rate_prev_30days = Column(String, nullable=False)
+  rate_prev_30days = Column(String, nullable=False) # [rate, ...] というリスト
   allow_hurry = Column(Boolean, nullable=False)
   admin = Column(Boolean, nullable=False)
   enable = Column(Boolean, nullable=False)

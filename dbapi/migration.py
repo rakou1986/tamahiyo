@@ -56,7 +56,8 @@ def main():
     active = False
     # 最近居る人だけ日数で絞り込めるように
     # 一日12戦として、最後の60日分（720戦）には別のタイムスタンプをつける
-    if len_ - i <= 720:
+    iii = len_ - i
+    if iii <= 720:
       timestamp = now - (_2_hour * (len_ - i))
       active = True
     gr = GeneralRecord(timestamp, u"#こっこたまひよ", 0, u"someone")
@@ -87,6 +88,8 @@ def main():
       if active:
         pr.user.result_last_60_days = tama._construct_result_last_60_days(pr.user, pr.won)
       db_session.flush()
+      if iii in range(0, 12*90, 12):
+        tama.daily_update()
   db_session.commit()
 
   # 連勝のやつ
