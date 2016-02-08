@@ -53,8 +53,12 @@ def main():
     loser_change = int(columns[10])
 
     timestamp = 946652400 # 仮に2000/01/01 00:00:00とする
+    active = False
+    # 最近居る人だけ日数で絞り込めるように
+    # 一日12戦として、最後の60日分（720戦）には別のタイムスタンプをつける
     if len_ - i <= 720:
       timestamp = now - (_2_hour * (len_ - i))
+      active = True
     gr = GeneralRecord(timestamp, u"#こっこたまひよ", 0, u"someone")
     gr.active = False
     db_session.add(gr)
@@ -79,13 +83,9 @@ def main():
         pr.determined_rate = pr.rate_at_umari - loser_change
         pr.user.lost_count += 1
       pr.user.rate = pr.determined_rate
-      # 表が不自然にならないような暫定の情報を付加
-      # 一日12戦として、最後の60日分（720戦）があればよさそう
-      if len_ - i <= 720:
-        pr.user.last_game_timestamp = timestamp
+      pr.user.last_game_timestamp = timestamp
+      if active:
         pr.user.result_last_60_days = tama._construct_result_last_60_days(pr.user, pr.won)
-      else:
-        pr.user.last_game_timestamp = int(time.time())
       db_session.flush()
   db_session.commit()
 
