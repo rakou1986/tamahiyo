@@ -88,7 +88,7 @@ def main():
       if active:
         pr.user.result_last_60_days = tama._construct_result_last_60_days(pr.user, pr.won)
       db_session.flush()
-      if iii in range(0, 12*90, 12):
+      if iii in range(0, 12*60, 12):
         tama.daily_update()
   db_session.commit()
 
