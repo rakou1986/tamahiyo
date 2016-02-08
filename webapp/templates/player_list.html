@@ -31,7 +31,6 @@
   <tbody>
     <tr>
       <td>
-        参戦
         <input class="days" name="days" type="button" value="全期間">
         または
         <input class="days" name="days" type="button" value="7">
@@ -57,6 +56,13 @@
       <th>偏差値</th>
       <th>連勝</th>
       <th style="display:none;">最終参戦</th>
+      {# 最終参戦から60日以内の勝敗とタイムスタンプがJSONで来るが、さらに描画時点で60日以内に絞る。 #}
+      <th style="display:none;">直近の勝敗</th>
+      {# 表示期間を全期間に戻すときに再読み込みするための値 #}
+      <th style="display:none;">トータル参戦数</th>
+      <th style="display:none;">トータル勝利数</th>
+      <th style="display:none;">トータル敗北数</th>
+      <th style="display:none;">トータル勝率</th>
     </tr>
   </thead>
   <tbody>
@@ -66,13 +72,19 @@
       <td class="rate">{{ player.rate }}</td>
       <td>{{ player.rate_diff_30 }}</td>
       <td>{{ player.name }}</td>
-      <td>{{ player.games }}</td>
+      <td class="games">{{ player.games }}</td>
       <td class="won">{{ player.won }}</td>
       <td class="lost">{{ player.lost }}</td>
-      <td>{{ player.won_freq }}</td>
+      <td class="won_freq">{{ player.won_freq }}</td>
       <td class="std_score"></td>
       <td class="streak">{{ player.streak }}</td>
       <td style="display:none;">{{ player.last_game_timestamp }}</td>
+      <td class="recent_results" style="display:none;">{{ player.result_last_60_days }}</td>
+      {# 表示期間を全期間に戻すときに再読み込みするための値 #}
+      <th class="games_total" style="display:none;">{{ player.games }}</th>
+      <th class="won_total" style="display:none;">{{ player.won }}</th>
+      <th class="lost_total" style="display:none;">{{ player.lost }}</th>
+      <th class="won_freq_total" style="display:none;">{{ player.won_freq }}</th>
     </tr>
     {% endfor %}
   </tbody>

@@ -23,8 +23,9 @@
       var rate = parseInt(data[1]) || 0; {# 「レート」列の値 #}
 
       {# n日以内に参戦した #}
-      var seconds_within = parseInt($("#days_within").val(), 10) * 24 * 60 * 60;
+      var seconds_within = get_seconds_within();
       var now = Math.floor($.now() / 1000);  {# タイムスタンプ(ミリ秒) / 1000 #}
+      var now = get_int_now();  {# タイムスタンプ(ミリ秒) / 1000 #}
       var last_game_timestamp = parseInt(data[10]) || 0; {# 「最終参戦」列の値 #}
       var elapsed = now - last_game_timestamp;
       var active = elapsed <= seconds_within;  {#どちらかがNaNの場合もfalse #}
@@ -54,6 +55,14 @@
         }
       return false; {# 非表示 #}
       });
+
+  {# DOMの更新後にもソートできるようにするにはこの設定が必要。
+  http://www.datatables.net/examples/plug-ins/dom_sort.html #}
+  $.fn.dataTable.ext.order["dom-text-numeric"] = function(settings, col){
+    return this.api().column(col, {order:'index'}).nodes().map(function(td, i){
+      return $(td).text();
+      });
+    }
 
   var debug = {};
 
@@ -96,6 +105,27 @@
 
       {# 標準の並び順をレート高い順にする #}
       "order": [[1,'desc']],
+
+      {# DOMの更新後にもソートできるようにするにはこの設定が必要。
+      http://www.datatables.net/examples/plug-ins/dom_sort.html #}
+      "columns": [
+          null, {# 連番 #}
+          null, {# レート #}
+          null, {# 先月比 #}
+          null, {# 名前 #}
+          {"orderDataType": "dom-text-numeric"}, {# 参戦数 #}
+          {"orderDataType": "dom-text-numeric"}, {# 勝 #}
+          {"orderDataType": "dom-text-numeric"}, {# 敗 #}
+          {"orderDataType": "dom-text-numeric"}, {# 勝率 #}
+          {"orderDataType": "dom-text-numeric"}, {# 偏差値 #}
+          null, {# 連勝 #}
+          null, {# 最終参戦 #}
+          null, {# 直近の勝敗 #}
+          null, {# トータル参戦数 #}
+          null, {# トータル勝利数 #}
+          null, {# トータル敗北数 #}
+          null, {# トータル勝率 #}
+        ],
     });
 
     {# 表の行数を表示 #}
@@ -108,7 +138,7 @@
     {# テキストボックスの更新に対応するイベントハンドラ #}
     $("#rate_min, #rate_max, #days_within, #games_min, #games_max").keyup(function(){
       {# フィルターを適用したら、偏差値を再計算する #}
-      $.when(table.draw()).done(update_std_score(table));
+      $.when(table.draw()).done(update_std_score(table), update_period_info(table));
       });
 
     {# 日数指定ボタンのイベントハンドラ #}
@@ -148,6 +178,7 @@
 
     init_days_button();
     update_std_score(table);
+    update_period_info(table);
 
   });
 
@@ -167,10 +198,54 @@
       }
     }
 
+  {# フィルターで絞り込み後に参戦数と勝率を再計算 #}
+  function update_period_info(table){
+    var seconds_within = get_seconds_within();
+    var rows = get_filtered_rows(table);
+    rows.each(function() {
+      var games = this.getElementsByClassName("games")[0];
+      var games_total = this.getElementsByClassName("games_total")[0].textContent;
+      var won = this.getElementsByClassName("won")[0];
+      var won_total = this.getElementsByClassName("won_total")[0].textContent;
+      var lost = this.getElementsByClassName("lost")[0];
+      var lost_total = this.getElementsByClassName("lost_total")[0].textContent;
+      var won_freq = this.getElementsByClassName("won_freq")[0];
+      var won_freq_total = this.getElementsByClassName("won_freq_total")[0].textContent;
+      if (isNaN(seconds_within)){
+        games.textContent = games_total;
+        won.textContent = won_total;
+        lost.textContent = lost_total;
+        won_freq.textContent = won_freq_total;
+        }
+      else {
+        var recent_results = $.parseJSON(this.getElementsByClassName("recent_results")[0].textContent);
+        var period_results = [];
+        var now = get_int_now();
+        $.each(recent_results, function(key, value){
+          var timestamp = parseInt(key, 10);
+          if (now - timestamp < seconds_within){
+            period_results.push(value);
+            }
+          });
+        period_results = period_results.map(function(won){
+          return won ? 1 : 0;
+          });
+        var games_period = period_results.length;
+        var won_count = period_results.reduce(function(a, b){
+          return a + b;
+          });
+        var won_freq_period = padding(round_(won_count / games_period * 100, 3), 2);
+        games.textContent = games_period.toString();
+        won.textContent = won_count.toString();
+        lost.textContent = (games_period - won_count).toString();
+        won_freq.textContent = won_freq_period;
+        }
+      });
+    }
 
   {# フィルターで絞り込み後に偏差値を再計算 #}
   function update_std_score(table){
-    var rows = table.$("tr", {"filter": "applied"}); {# フィルター後の各行 #}
+    var rows = get_filtered_rows(table);
     var rates = [];
     rows.each(function(){
       rates.push(parseInt(this.getElementsByClassName("rate")[0].textContent, 10));
@@ -180,6 +255,19 @@
       this.getElementsByClassName("std_score"
           )[0].textContent = get_std_score(rate, rates);
       });
+    }
+
+  {# フィルター後の各行を得る #}
+  function get_filtered_rows(table){
+    return table.$("tr", {"filter": "applied"});
+    }
+
+  function get_seconds_within(){
+    return parseInt($("#days_within").val(), 10) * 24 * 60 * 60;
+    }
+
+  function get_int_now(){
+    return Math.floor($.now() / 1000);  {# タイムスタンプ(ミリ秒) / 1000 #}
     }
 
   {# 偏差値 #}
@@ -208,7 +296,7 @@
     }
 
   function round_(float_, n){
-    {# 小数第n位で四捨五入 #}
+    {# 小数第n位を四捨五入 #}
     var m = Math.pow(10, n-1);
     return Math.round(float_ * m) / m;
     }
@@ -225,6 +313,7 @@
         }
       }
     else {
+      s += ".";
       for (var i = 0; i < n; i++){
         s += "0";
         }
