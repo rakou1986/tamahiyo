@@ -46,9 +46,9 @@
   <thead>
     <tr>
       <th></th>
+      <th>名前</th>
       <th>レート</th>
       <th>先月比</th>
-      <th>名前</th>
       <th>参戦数</th>
       <th>勝</th>
       <th>敗</th>
@@ -69,9 +69,9 @@
     {% for player in players %}
     <tr>
       <td></td>
+      <td>{{ player.name }}</td>
       <td class="rate">{{ player.rate }}</td>
       <td>{{ player.rate_diff_30 }}</td>
-      <td>{{ player.name }}</td>
       <td class="games">{{ player.games }}</td>
       <td class="won">{{ player.won }}</td>
       <td class="lost">{{ player.lost }}</td>

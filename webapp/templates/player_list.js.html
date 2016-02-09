@@ -20,7 +20,7 @@
       {# レートがn以上m以下 #}
       var rate_min = parseInt($("#rate_min").val(), 10);
       var rate_max = parseInt($("#rate_max").val(), 10);
-      var rate = parseInt(data[1]) || 0; {# 「レート」列の値 #}
+      var rate = parseInt(data[2]) || 0; {# 「レート」列の値 #}
 
       {# n日以内に参戦した #}
       var seconds_within = get_seconds_within();
@@ -110,9 +110,9 @@
       http://www.datatables.net/examples/plug-ins/dom_sort.html #}
       "columns": [
           null, {# 連番 #}
+          null, {# 名前 #}
           null, {# レート #}
           null, {# 先月比 #}
-          null, {# 名前 #}
           {"orderDataType": "dom-text-numeric"}, {# 参戦数 #}
           {"orderDataType": "dom-text-numeric"}, {# 勝 #}
           {"orderDataType": "dom-text-numeric"}, {# 敗 #}
