@@ -13,3 +13,6 @@
 .button_press {
   background-color: #deb887; /* burly wood */
   }
+#player_list {
+  width: 910px;
+  }
