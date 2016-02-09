@@ -17,5 +17,11 @@
   width: 910px;
   }
 table.search {
+  width: 910px;
   margin: 0px auto;
+  }
+.search_info {
+  width: 910px;
+  margin:0px auto;
+  float: none !important;
   }
