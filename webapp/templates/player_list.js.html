@@ -83,6 +83,14 @@
         }
       });
 
+    {# 先月比+なら+符号を表示 #}
+    $(".rate_diff_30").each(function(){
+      var rate_diff_30 = parseInt(this.textContent, 10);
+      if (0 < rate_diff_30){
+        this.textContent = "+" + this.textContent;
+        }
+      });
+
     {# DataTableオブジェクトの構築 #}
     var table = $("#player_list").DataTable({
       paging: false,
@@ -112,7 +120,7 @@
           null, {# 連番 #}
           null, {# 名前 #}
           null, {# レート #}
-          null, {# 先月比 #}
+          {"orderDataType": "dom-text-numeric"}, {# 先月比 #}
           {"orderDataType": "dom-text-numeric"}, {# 参戦数 #}
           {"orderDataType": "dom-text-numeric"}, {# 勝 #}
           {"orderDataType": "dom-text-numeric"}, {# 敗 #}
