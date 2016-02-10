@@ -65,6 +65,7 @@
     }
 
   var debug = {};
+  var t = NaN;
 
   $(document).ready(function(){
     {# 連勝・連敗数にテキストをつける。負の値が連敗 #}
@@ -137,17 +138,21 @@
         ],
     });
 
+    t = table;
+
     {# 表の行数を表示 #}
     table.on("order.dt search.dt", function () {
       table.column(0, {search:"applied", order:"applied"}).nodes().each( function (cell, i) {
         cell.innerHTML = i+1;
         });
-      }).draw();
+      });
 
-    {# テキストボックスの更新に対応するイベントハンドラ #}
+    {# keyupイベントハンドラ #}
     $("#rate_min, #rate_max, #days_within, #games_min, #games_max").keyup(function(){
-      {# フィルターを適用したら、偏差値を再計算する #}
-      $.when(table.draw()).done(update_std_score(table), update_period_info(table));
+      {# 日数による表示内容の変更後にフィルターを適用して表を描画し、
+         さらにその後、偏差値を再計算する #}
+      // $.when(table.draw()).done(update_std_score(table), update_period_info(table));
+      $.when(update_period_info(table)).done(update_std_score(table));
       });
 
     {# 日数指定ボタンのイベントハンドラ #}
@@ -186,8 +191,7 @@
       });
 
     init_days_button();
-    update_std_score(table);
-    update_period_info(table);
+    $.when(update_period_info(table)).done(update_std_score(table));
 
   });
 
@@ -209,25 +213,42 @@
 
   {# フィルターで絞り込み後に参戦数と勝率を再計算 #}
   function update_period_info(table){
+
+    {# フィルターする列のDOMを更新したら、DataTablesのキャッシュも更新する必要がある。
+    下記ではthis.data配列の値を変更することが、DataTablesのキャッシュを更新することにあたる。
+    table.rows().every()による方法 https://datatables.net/reference/api/row%28%29.data%28%29
+    #}
+
     var seconds_within = get_seconds_within();
-    var rows = get_filtered_rows(table);
-    rows.each(function() {
-      var games = this.getElementsByClassName("games")[0];
-      var games_total = this.getElementsByClassName("games_total")[0].textContent;
-      var won = this.getElementsByClassName("won")[0];
-      var won_total = this.getElementsByClassName("won_total")[0].textContent;
-      var lost = this.getElementsByClassName("lost")[0];
-      var lost_total = this.getElementsByClassName("lost_total")[0].textContent;
-      var won_freq = this.getElementsByClassName("won_freq")[0];
-      var won_freq_total = this.getElementsByClassName("won_freq_total")[0].textContent;
+    var dom_rows = table.$("tr");
+    table.rows().every(function(){
+      {#  data[1]:名前,  data[4]:参戦数, data[5]:勝, data[6]:敗, data[7]:勝率   #}
+      var data = this.data(); {# 各行の値が、左の列から順に配列で返る。 #}
+      var row = dom_rows.filter(function(){
+        return this.getElementsByClassName("name")[0].textContent == data[1];
+        });
+      var games          = $(".games",          row);
+      var games_total    = $(".games_total",    row);
+      var won            = $(".won",            row);
+      var won_total      = $(".won_total",      row);
+      var lost           = $(".lost",           row);
+      var lost_total     = $(".lost_total",     row);
+      var won_freq       = $(".won_freq",       row);
+      var won_freq_total = $(".won_freq_total", row);
+
       if (isNaN(seconds_within)){
-        games.textContent = games_total;
-        won.textContent = won_total;
-        lost.textContent = lost_total;
-        won_freq.textContent = won_freq_total;
+        games.text(games_total.text());
+        won.text(won_total.text());
+        lost.text(lost_total.text());
+        won_freq.text(won_freq_total.text());
+        data[4] = games_total.text();
+        data[5] = won_total.text();
+        data[6] = lost_total.text();
+        data[7] = won_freq_total.text();
         }
+
       else {
-        var recent_results = $.parseJSON(this.getElementsByClassName("recent_results")[0].textContent);
+        var recent_results = $.parseJSON($(".recent_results", row).text());
         var period_results = [];
         var now = get_int_now();
         $.each(recent_results, function(key, value){
@@ -236,20 +257,40 @@
             period_results.push(value);
             }
           });
-        period_results = period_results.map(function(won){
-          return won ? 1 : 0;
-          });
-        var games_period = period_results.length;
-        var won_count = period_results.reduce(function(a, b){
-          return a + b;
-          });
-        var won_freq_period = padding(round_(won_count / games_period * 100, 3), 2);
-        games.textContent = games_period.toString();
-        won.textContent = won_count.toString();
-        lost.textContent = (games_period - won_count).toString();
-        won_freq.textContent = won_freq_period;
+        if (period_results.length == 0) {
+          games.text("0");
+          won.text("0");
+          lost.text("0");
+          won_freq.text("0");
+          data[4] = "0";
+          data[5] = "0";
+          data[6] = "0";
+          data[7] = "0";
+          }
+        else {
+          period_results = period_results.map(function(won){
+            return won ? 1 : 0;
+            });
+          var games_period = period_results.length;
+          var won_count = period_results.reduce(function(a, b){
+            return a + b;
+            });
+          var won_freq_period = padding(round_(won_count / games_period * 100, 3), 2);
+          games.text(games_period.toString());
+          won.text(won_count.toString());
+          lost.text((games_period - won_count).toString());
+          won_freq.text(won_freq_period);
+          data[4] = games_period.toString();
+          data[5] = won_count.toString();
+          data[6] = (games_period - won_count).toString();
+          data[7] = won_freq_period;
+          }
         }
+      this.data(data);
+      this.invalidate();
       });
+    {# 日数による参戦数、勝敗数、勝率の再計算後に、フィルターを適用して表を再描画 #}
+    table.draw();
     }
 
   {# フィルターで絞り込み後に偏差値を再計算 #}
