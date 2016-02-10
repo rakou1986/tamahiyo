@@ -147,12 +147,10 @@
         });
       });
 
-    {# keyupイベントハンドラ #}
+    {# レートと参戦数フィルターのイベントハンドラ #}
     $("#rate_min, #rate_max, #days_within, #games_min, #games_max").keyup(function(){
-      {# 日数による表示内容の変更後にフィルターを適用して表を描画し、
-         さらにその後、偏差値を再計算する #}
-      // $.when(table.draw()).done(update_std_score(table), update_period_info(table));
-      $.when(update_period_info(table)).done(update_std_score(table));
+      {# フィルターを適用して表を再描画し、偏差値を再計算する #}
+      $.when(table.draw()).done(update_std_score(table));
       });
 
     {# 日数指定ボタンのイベントハンドラ #}
@@ -171,10 +169,13 @@
       else {
         value = this.value;
         }
-      $("#days_within").val(value).trigger("keyup");
+      $.when($("#days_within").val(value)).done(
+        {# 日数による値の変更後にフィルターを適用して表を再描画し、偏差値を再計算する #}
+        $.when(update_period_info(table)).done(update_std_score(table))
+        );
       });
 
-    {# フィルターしない（全部表示） #}
+    {# フィルター条件をクリアするボタンのイベントハンドラ #}
     $("#view_all").click(function(){
       $.when(
         $("#rate_min, #rate_max, #days_within, #games_min, #games_max").val("")
@@ -186,11 +187,16 @@
         ).done(
           init_days_button()
         ),
-        $("#rate_min").trigger("keyup")
+        {# 日数による値の変更後にフィルターを適用して表を再描画し、偏差値を再計算する #}
+        $.when(update_period_info(table)).done(update_std_score(table))
         );
       });
 
     init_days_button();
+
+    {# 読み込み時に日数フィルターの指定があれば日数で表の値を変更し、
+       変更後の値でフィルターしてから表を再描画して、
+       フィルター後の各行について偏差値を再計算する。 #}
     $.when(update_period_info(table)).done(update_std_score(table));
 
   });
