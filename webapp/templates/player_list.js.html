@@ -72,11 +72,11 @@
     $(".streak").each(function(){
       var streak_ = parseInt(this.textContent, 10);
       if (streak_ < -1) {
-        this.textContent = Math.abs(streak_).toString() + "連敗";
+        this.textContent = "-" + Math.abs(streak_).toString();
         this.classList.add("streak_negative");
         }
       else if (1 < streak_) {
-        this.textContent = streak_.toString() + "連勝";
+        this.textContent = "+" + streak_.toString();
         this.classList.add("streak_positive");
         }
       else {
