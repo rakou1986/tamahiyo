@@ -65,7 +65,6 @@
     }
 
   var debug = {};
-  var t = NaN;
 
   $(document).ready(function(){
     {# 連勝・連敗数にテキストをつける。負の値が連敗 #}
@@ -138,8 +137,6 @@
         ],
     });
 
-    t = table;
-
     {# 表の行数を表示 #}
     table.on("order.dt search.dt", function () {
       table.column(0, {search:"applied", order:"applied"}).nodes().each( function (cell, i) {
@@ -162,14 +159,7 @@
       ).done(
         this.classList.add("button_press")
         );
-      var value = NaN;
-      if (this.value == "全期間"){
-        value = "";
-        }
-      else {
-        value = this.value;
-        }
-      $.when($("#days_within").val(value)).done(
+      $.when($("#days_within").val(this.name)).done(
         {# 日数による値の変更後にフィルターを適用して表を再描画し、偏差値を再計算する #}
         $.when(update_period_info(table)).done(update_std_score(table))
         );
@@ -205,16 +195,11 @@
   {# どのボタンが押されているのか分かるように着色 #}
   function init_days_button(){
     var val = $("#days_within").val();
-    if (val == ""){
-      $(".days[value='全期間']")[0].classList.add("button_press");
-      }
-    else {
-      $(".days").each(function(){
-        if (this.value == val){
-          this.classList.add("button_press");
-          }
-        });
-      }
+    $(".days").each(function(){
+      if (this.name == val){
+        this.classList.add("button_press");
+        }
+      });
     }
 
   {# フィルターで絞り込み後に参戦数と勝率を再計算 #}
